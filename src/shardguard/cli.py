@@ -11,9 +11,6 @@ console = Console()
 @app.command()
 def plan(
     prompt: str,
-    use_ollama: bool = typer.Option(
-        False, "--ollama", help="Use Ollama instead of mock LLM"
-    ),
     model: str = typer.Option("llama3.2", "--model", help="Ollama model to use"),
     ollama_url: str = typer.Option(
         "http://localhost:11434", "--ollama-url", help="Ollama base URL"
@@ -21,15 +18,8 @@ def plan(
 ):
     """Generate a safe execution plan for a user prompt."""
     try:
-        if use_ollama:
-            planner = PlanningLLM(model=model, base_url=ollama_url)
-            console.print(f"[dim]Using Ollama model: {model} at {ollama_url}[/dim]")
-        else:
-            # Import MockPlanningLLM only when needed for development/testing
-            from shardguard.dev_utils import MockPlanningLLM
-
-            planner = MockPlanningLLM()
-            console.print("[dim]Using MockPlanningLLM for development[/dim]")
+        planner = PlanningLLM(model=model, base_url=ollama_url)
+        console.print(f"[dim]Using Ollama model: {model} at {ollama_url}[/dim]")
 
         coord = CoordinationService(planner)
         plan_obj = coord.handle_prompt(prompt)

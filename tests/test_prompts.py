@@ -13,8 +13,7 @@ class TestPlanningPrompt:
 
         assert "backup my files" in formatted
         assert "ShardGuard" in formatted
-        assert "USER_PROMPT:" in formatted
-        assert "END." in formatted
+        assert "Input" in formatted
 
     def test_planning_prompt_contains_instructions(self):
         """Test that prompt contains necessary instructions."""
@@ -22,11 +21,11 @@ class TestPlanningPrompt:
         formatted = PLANNING_PROMPT.format(user_prompt=user_input)
 
         # Check for key instruction elements
-        assert "sensitive and private information" in formatted
-        assert "reference placeholders" in formatted
-        assert "[USERNAME]" in formatted
-        assert "[PASSWORD]" in formatted
-        assert "JSON document" in formatted
+        assert "sensitive" in formatted
+        assert "private data" in formatted
+        assert "placeholder" in formatted
+        assert "[[P" in formatted
+        assert "JSON" in formatted
 
     def test_planning_prompt_contains_json_schema(self):
         """Test that prompt contains proper JSON response schema."""
@@ -46,14 +45,14 @@ class TestPlanningPrompt:
         formatted = PLANNING_PROMPT.format(user_prompt=user_input)
 
         assert user_input in formatted
-        assert "USER_PROMPT:" in formatted
+        assert "Input" in formatted
 
     def test_planning_prompt_with_empty_input(self):
         """Test formatting with empty user input."""
         user_input = ""
         formatted = PLANNING_PROMPT.format(user_prompt=user_input)
 
-        assert "USER_PROMPT:\n\nEND." in formatted
+        assert "Input\n-----\n\n" in formatted
 
     def test_planning_prompt_with_long_input(self):
         """Test formatting with very long user input."""

@@ -93,31 +93,6 @@ class TestPlanCommand:
         assert result.exit_code == 0
         mock_coordination.handle_prompt.assert_called_once_with("backup my files")
 
-    @patch("shardguard.cli.CoordinationService")
-    def test_plan_command_json_output(self, mock_coordination_class):
-        """Test that plan command outputs valid JSON."""
-        # Mock coordination service
-        mock_coordination = Mock()
-        mock_coordination_class.return_value = mock_coordination
-
-        mock_plan = Plan(
-            original_prompt="test",
-            sub_prompts=[SubPrompt(id=1, content="task", opaque_values={})],
-        )
-        mock_coordination.handle_prompt.return_value = mock_plan
-
-        result = self.runner.invoke(app, ["plan", "test prompt"])
-
-        assert result.exit_code == 0
-
-        # Should output valid JSON
-        try:
-            output_data = json.loads(result.stdout.strip())
-            assert "original_prompt" in output_data
-            assert "sub_prompts" in output_data
-        except json.JSONDecodeError:
-            pytest.fail("CLI output is not valid JSON")
-
     def test_plan_command_missing_prompt(self):
         """Test plan command without prompt argument."""
         result = self.runner.invoke(app, ["plan"])
@@ -160,10 +135,15 @@ class TestPlanCommand:
         mock_coordination.handle_prompt.assert_called_once_with("")
 
     @patch("shardguard.cli.CoordinationService")
-    def test_plan_command_uses_mock_planning_llm(self, mock_coordination_class):
-        """Test that plan command initializes CoordinationService with MockPlanningLLM."""
+    @patch("shardguard.cli.PlanningLLM")
+    def test_plan_command_uses_planning_llm(
+        self, mock_planner_class, mock_coordination_class
+    ):
+        """Test that plan command initializes CoordinationService with PlanningLLM."""
         mock_coordination = Mock()
         mock_coordination_class.return_value = mock_coordination
+        mock_planner = Mock()
+        mock_planner_class.return_value = mock_planner
 
         mock_plan = Plan(
             original_prompt="test",
@@ -171,15 +151,13 @@ class TestPlanCommand:
         )
         mock_coordination.handle_prompt.return_value = mock_plan
 
-        with patch("shardguard.dev_utils.MockPlanningLLM") as mock_planner_class:
-            mock_planner = Mock()
-            mock_planner_class.return_value = mock_planner
+        result = self.runner.invoke(app, ["plan", "test"])
 
-            result = self.runner.invoke(app, ["plan", "test"])
-
-            assert result.exit_code == 0
-            mock_planner_class.assert_called_once()
-            mock_coordination_class.assert_called_once_with(mock_planner)
+        assert result.exit_code == 0
+        mock_planner_class.assert_called_once_with(
+            model="llama3.2", base_url="http://localhost:11434"
+        )
+        mock_coordination_class.assert_called_once_with(mock_planner)
 
 
 class TestCLIErrorHandling:
@@ -236,8 +214,18 @@ class TestCLIIntegration:
         """Set up test fixtures."""
         self.runner = CliRunner()
 
-    def test_plan_command_real_integration(self):
-        """Test plan command with real MockPlanningLLM integration."""
+    @patch("shardguard.cli.CoordinationService")
+    def test_plan_command_integration(self, mock_coordination_class):
+        """Test plan command integration with mocked coordination service."""
+        mock_coordination = Mock()
+        mock_coordination_class.return_value = mock_coordination
+
+        mock_plan = Plan(
+            original_prompt="backup files at 3 AM",
+            sub_prompts=[SubPrompt(id=1, content="task", opaque_values={})],
+        )
+        mock_coordination.handle_prompt.return_value = mock_plan
+
         result = self.runner.invoke(app, ["plan", "backup files at 3 AM"])
 
         assert result.exit_code == 0
@@ -251,42 +239,31 @@ class TestCLIIntegration:
         except (json.JSONDecodeError, ValueError):
             pytest.fail(f"CLI output does not contain valid JSON: {result.stdout}")
 
-    def test_plan_command_real_number_extraction(self):
-        """Test that real integration properly extracts numbers."""
-        result = self.runner.invoke(app, ["plan", "schedule at 15:30 with 5 retries"])
+    @patch("shardguard.cli.CoordinationService")
+    def test_multiple_plan_commands(self, mock_coordination_class):
+        """Test multiple plan commands work independently and produce valid output."""
+        mock_coordination = Mock()
+        mock_coordination_class.return_value = mock_coordination
 
-        assert result.exit_code == 0
+        mock_plan = Plan(
+            original_prompt="test prompt",
+            sub_prompts=[SubPrompt(id=1, content="task", opaque_values={})],
+        )
+        mock_coordination.handle_prompt.return_value = mock_plan
 
-        # Extract and parse JSON from output
-        output_data = extract_json_from_cli_output(result.stdout)
-        opaque_values = output_data["sub_prompts"][0]["opaque_values"]
+        test_cases = ["backup at 1 AM", "sync every 2 hours", "cleanup after 3 days"]
 
-        # Should extract numbers: 15, 30, 5
-        extracted_numbers = list(opaque_values.values())
-        assert "15" in extracted_numbers
-        assert "30" in extracted_numbers
-        assert "5" in extracted_numbers
-
-    def test_multiple_plan_commands(self):
-        """Test multiple plan commands work independently."""
-        test_cases = [
-            ("backup at 1 AM", ["1"]),
-            ("sync every 2 hours", ["2"]),
-            ("cleanup after 3 days", ["3"]),
-        ]
-
-        for prompt, expected_numbers in test_cases:
+        for prompt in test_cases:
             result = self.runner.invoke(app, ["plan", prompt])
 
             assert result.exit_code == 0
 
             # Extract and parse JSON from output
             output_data = extract_json_from_cli_output(result.stdout)
-            opaque_values = output_data["sub_prompts"][0]["opaque_values"]
-            extracted_numbers = list(opaque_values.values())
-
-            for num in expected_numbers:
-                assert num in extracted_numbers
+            assert isinstance(output_data, dict)
+            assert "original_prompt" in output_data
+            assert "sub_prompts" in output_data
+            assert len(output_data["sub_prompts"]) >= 1
 
 
 class TestCLIOutput:
@@ -319,8 +296,8 @@ class TestCLIOutput:
 
         assert result.exit_code == 0
 
-        # Check JSON structure
-        output_data = json.loads(result.stdout.strip())
+        # Check JSON structure using the helper function to handle console output
+        output_data = extract_json_from_cli_output(result.stdout)
         assert output_data["original_prompt"] == "test prompt"
         assert len(output_data["sub_prompts"]) == 2
         assert output_data["sub_prompts"][0]["opaque_values"] == {

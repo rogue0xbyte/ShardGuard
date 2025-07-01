@@ -28,40 +28,28 @@ class TestSubPrompt:
         assert subprompt.content == "Content with secrets"
         assert subprompt.opaque_values == opaque_values
 
-    def test_subprompt_validation_missing_id(self):
-        """Test that SubPrompt validation fails when id is missing."""
+    @pytest.mark.parametrize(
+        "field,value,expected_error",
+        [
+            ("id", None, "id"),
+            ("content", None, "content"),
+            ("id", "not_an_int", "id"),
+            ("content", 123, "content"),
+            ("opaque_values", "not_a_dict", "opaque_values"),
+        ],
+    )
+    def test_subprompt_validation_errors(self, field, value, expected_error):
+        """Test SubPrompt validation failures for various invalid inputs."""
+        kwargs = {"id": 1, "content": "Test content", "opaque_values": {}}
+        if value is None:
+            kwargs.pop(field, None)
+        else:
+            kwargs[field] = value
+
         with pytest.raises(ValidationError) as exc_info:
-            SubPrompt(content="Test content")
+            SubPrompt(**kwargs)
 
-        assert "id" in str(exc_info.value)
-
-    def test_subprompt_validation_missing_content(self):
-        """Test that SubPrompt validation fails when content is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            SubPrompt(id=1)
-
-        assert "content" in str(exc_info.value)
-
-    def test_subprompt_validation_invalid_id_type(self):
-        """Test that SubPrompt validation fails for invalid id type."""
-        with pytest.raises(ValidationError) as exc_info:
-            SubPrompt(id="not_an_int", content="Test content")
-
-        assert "id" in str(exc_info.value)
-
-    def test_subprompt_validation_invalid_content_type(self):
-        """Test that SubPrompt validation fails for invalid content type."""
-        with pytest.raises(ValidationError) as exc_info:
-            SubPrompt(id=1, content=123)
-
-        assert "content" in str(exc_info.value)
-
-    def test_subprompt_validation_invalid_opaque_values_type(self):
-        """Test that SubPrompt validation fails for invalid opaque_values type."""
-        with pytest.raises(ValidationError) as exc_info:
-            SubPrompt(id=1, content="Test", opaque_values="not_a_list")
-
-        assert "opaque_values" in str(exc_info.value)
+        assert expected_error in str(exc_info.value)
 
 
 class TestPlan:
