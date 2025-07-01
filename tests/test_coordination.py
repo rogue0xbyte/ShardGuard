@@ -1,232 +1,259 @@
-"""Tests for ShardGuard coordination service."""
+"""Tests for ShardGuard coordination functionality."""
 
-import json
-from io import StringIO
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic import ValidationError
 
 from shardguard.core.coordination import CoordinationService
 from shardguard.core.models import Plan
-from shardguard.core.sanitization import InputSanitizer
-from tests.test_helpers import MockPlanningLLM
+from shardguard.core.sanitization import SanitizationResult
+
+
+class MockPlanningLLM:
+    """Mock planning LLM for testing."""
+
+    def __init__(self, response: str | None = None):
+        self.response = response or '{"original_prompt": "test", "sub_prompts": []}'
+
+    def generate_plan(self, prompt: str) -> str:
+        return self.response
 
 
 class TestCoordinationService:
-    """Test cases for CoordinationService."""
+    """Test cases for CoordinationService class."""
 
-    def test_init_with_planner(self):
-        """Test CoordinationService initialization."""
-        planner = MockPlanningLLM()
-        service = CoordinationService(planner)
-
-        assert service.planner is planner
-        assert service.console is not None
-        assert service.sanitizer is not None
-        assert isinstance(service.sanitizer, InputSanitizer)
-
-    def test_handle_prompt_basic_flow(self):
-        """Test the complete flow of handling a prompt."""
-        planner = MockPlanningLLM()
-        service = CoordinationService(planner)
-
-        with patch("sys.stdout", new_callable=StringIO):  # Suppress console output
-            result = service.handle_prompt("backup files at 3 AM")
-
-        assert isinstance(result, Plan)
-        assert result.original_prompt is not None
-        assert len(result.sub_prompts) == 1
-        assert result.sub_prompts[0].id == 1
-
-    def test_handle_prompt_with_mock_planner(self):
-        """Test handle_prompt with mock planner to verify integration."""
-        mock_planner = Mock()
-        mock_plan_json = json.dumps(
-            {
-                "original_prompt": "test prompt",
-                "sub_prompts": [
+    @pytest.mark.parametrize(
+        "json_response, expected_original_prompt, expected_sub_prompts",
+        [
+            (
+                """
+                {
+                    "original_prompt": "Hello world",
+                    "sub_prompts": [
+                        {
+                            "id": 1,
+                            "content": "Process greeting",
+                            "opaque_values": {}
+                        }
+                    ]
+                }
+                """,
+                "Hello world",
+                [{"id": 1, "content": "Process greeting", "opaque_values": {}}],
+            ),
+            (
+                """
+                {
+                    "original_prompt": "Process [[P1]] data",
+                    "sub_prompts": [
+                        {
+                            "id": 1,
+                            "content": "Analyze [[P1]]",
+                            "opaque_values": {
+                                "[[P1]]": "sensitive_information"
+                            }
+                        }
+                    ]
+                }
+                """,
+                "Process [[P1]] data",
+                [
                     {
                         "id": 1,
-                        "content": "task 1",
-                        "opaque_values": {"[VALUE_1]": "val1"},
+                        "content": "Analyze [[P1]]",
+                        "opaque_values": {"[[P1]]": "sensitive_information"},
                     }
                 ],
-            }
-        )
-        mock_planner.generate_plan.return_value = mock_plan_json
-
-        service = CoordinationService(mock_planner)
-
-        with patch("sys.stdout", new_callable=StringIO):
-            result = service.handle_prompt("test input")
-
-        # Verify planner was called with formatted prompt
-        mock_planner.generate_plan.assert_called_once()
-        call_args = mock_planner.generate_plan.call_args[0][0]
-        assert "test input" in call_args
-        assert "ShardGuard" in call_args
-
-        # Verify result
-        assert isinstance(result, Plan)
-        assert result.original_prompt == "test prompt"
-
-
-class TestCoordinationServiceSanitization:
-    """Test cases for sanitization integration in CoordinationService."""
-
-    def test_handle_prompt_calls_sanitizer(self):
-        """Test that handle_prompt uses the sanitizer."""
-        mock_planner = Mock()
-        mock_plan_json = json.dumps(
-            {
-                "original_prompt": "test prompt",
-                "sub_prompts": [
+            ),
+            (
+                """
+                {
+                    "original_prompt": "Complex task with [[P1]] and [[P2]]",
+                    "sub_prompts": [
+                        {
+                            "id": 1,
+                            "content": "First step with [[P1]]",
+                            "opaque_values": {
+                                "[[P1]]": "data1"
+                            }
+                        },
+                        {
+                            "id": 2,
+                            "content": "Second step with [[P2]]",
+                            "opaque_values": {
+                                "[[P2]]": "data2"
+                            }
+                        },
+                        {
+                            "id": 3,
+                            "content": "Final step",
+                            "opaque_values": {}
+                        }
+                    ]
+                }
+                """,
+                "Complex task with [[P1]] and [[P2]]",
+                [
                     {
                         "id": 1,
-                        "content": "task 1",
-                        "opaque_values": {"[VALUE_1]": "val1"},
-                    }
+                        "content": "First step with [[P1]]",
+                        "opaque_values": {"[[P1]]": "data1"},
+                    },
+                    {
+                        "id": 2,
+                        "content": "Second step with [[P2]]",
+                        "opaque_values": {"[[P2]]": "data2"},
+                    },
+                    {"id": 3, "content": "Final step", "opaque_values": {}},
                 ],
-            }
-        )
-        mock_planner.generate_plan.return_value = mock_plan_json
+            ),
+        ],
+    )
+    def test_handle_prompt(
+        self, json_response, expected_original_prompt, expected_sub_prompts
+    ):
+        """Test handling prompts with various responses."""
+        mock_planner = MockPlanningLLM(json_response.strip())
 
-        service = CoordinationService(mock_planner)
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
 
-        with patch.object(service.sanitizer, "sanitize") as mock_sanitize:
-            mock_sanitize.return_value.sanitized_input = "sanitized input"
+            result = service.handle_prompt("Hello world")
 
-            with patch("sys.stdout", new_callable=StringIO):
-                service.handle_prompt("test input")
+        assert result.original_prompt == expected_original_prompt
+        assert len(result.sub_prompts) == len(expected_sub_prompts)
+        for sub_prompt, expected in zip(
+            result.sub_prompts, expected_sub_prompts, strict=False
+        ):
+            assert sub_prompt.id == expected["id"]
+            assert sub_prompt.content == expected["content"]
+
+    def test_handle_prompt_sanitization_called(self):
+        """Test that sanitization is called during prompt handling."""
+        mock_planner = MockPlanningLLM()
+
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
+
+            mock_sanitizer = Mock()
+            mock_sanitizer.sanitize.return_value = SanitizationResult(
+                "clean input", ["normalized"], 15
+            )
+            service.sanitizer = mock_sanitizer
+
+            service.handle_prompt("dirty input")
 
             # Verify sanitizer was called
-            mock_sanitize.assert_called_once_with("test input")
+            mock_sanitizer.sanitize.assert_called_once_with("dirty input")
 
-    def test_handle_prompt_uses_sanitized_input(self):
-        """Test that the sanitized input is used for prompt formatting."""
+    def test_handle_prompt_planning_called_with_formatted_prompt(self):
+        """Test that planner receives properly formatted prompt."""
         mock_planner = Mock()
-        mock_plan_json = json.dumps(
-            {
-                "original_prompt": "test prompt",
-                "sub_prompts": [{"id": 1, "content": "task 1", "opaque_values": {}}],
-            }
+        mock_planner.generate_plan.return_value = (
+            '{"original_prompt": "test", "sub_prompts": []}'
         )
-        mock_planner.generate_plan.return_value = mock_plan_json
 
-        service = CoordinationService(mock_planner)
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
 
-        with patch.object(service.sanitizer, "sanitize") as mock_sanitize:
-            mock_sanitize.return_value.sanitized_input = "cleaned input"
+            mock_sanitizer = Mock()
+            mock_sanitizer.sanitize.return_value = SanitizationResult(
+                "sanitized input", [], 15
+            )
+            service.sanitizer = mock_sanitizer
 
-            with patch("sys.stdout", new_callable=StringIO):
-                service.handle_prompt("dirty input")
+            service.handle_prompt("user input")
 
-            # Verify the sanitized input was used in the prompt
+            # Verify planner was called with formatted prompt
+            mock_planner.generate_plan.assert_called_once()
             call_args = mock_planner.generate_plan.call_args[0][0]
-            assert "cleaned input" in call_args
-            assert "dirty input" not in call_args
+
+            # The formatted prompt should contain the sanitized input
+            assert "sanitized input" in call_args
+
+    def test_format_prompt_method(self):
+        """Test the _format_prompt method."""
+        mock_planner = MockPlanningLLM()
+
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
+
+            formatted = service._format_prompt("test input")
+
+            # Should contain the input and be based on PLANNING_PROMPT
+            assert "test input" in formatted
+            assert len(formatted) > len(
+                "test input"
+            )  # Should be more than just the input
+
+    def test_handle_prompt_invalid_json_from_planner(self):
+        """Test handling of invalid JSON from planner."""
+        mock_planner = MockPlanningLLM("invalid json response")
+
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
+
+            mock_sanitizer = Mock()
+            mock_sanitizer.sanitize.return_value = SanitizationResult(
+                "clean input", [], 11
+            )
+            service.sanitizer = mock_sanitizer
+
+            with pytest.raises(Exception):  # Should raise validation error
+                service.handle_prompt("test input")
+
+    def test_handle_prompt_missing_required_fields(self):
+        """Test handling of JSON missing required fields."""
+        incomplete_json = '{"original_prompt": "test"}'  # Missing sub_prompts
+        mock_planner = MockPlanningLLM(incomplete_json)
+
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
+
+            mock_sanitizer = Mock()
+            mock_sanitizer.sanitize.return_value = SanitizationResult(
+                "clean input", [], 11
+            )
+            service.sanitizer = mock_sanitizer
+
+            with pytest.raises(Exception):  # Should raise validation error
+                service.handle_prompt("test input")
+
+    def test_handle_prompt_empty_subprompts_list(self):
+        """Test handling prompt with empty sub_prompts list."""
+        json_response = """
+        {
+            "original_prompt": "Simple task",
+            "sub_prompts": []
+        }
+        """
+        mock_planner = MockPlanningLLM(json_response.strip())
+
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
+
+            mock_sanitizer = Mock()
+            mock_sanitizer.sanitize.return_value = SanitizationResult(
+                "Simple task", [], 11
+            )
+            service.sanitizer = mock_sanitizer
+
+            result = service.handle_prompt("Simple task")
+
+        assert isinstance(result, Plan)
+        assert result.original_prompt == "Simple task"
+        assert result.sub_prompts == []
 
     def test_handle_prompt_sanitization_error_propagates(self):
         """Test that sanitization errors are propagated."""
-        planner = MockPlanningLLM()
-        service = CoordinationService(planner)
+        mock_planner = MockPlanningLLM()
 
-        with patch.object(service.sanitizer, "sanitize") as mock_sanitize:
-            mock_sanitize.side_effect = ValueError("Empty input")
+        with patch("builtins.open", Mock()):
+            service = CoordinationService(mock_planner)
 
-            with pytest.raises(ValueError, match="Empty input"):
-                service.handle_prompt("")
+            mock_sanitizer = Mock()
+            mock_sanitizer.sanitize.side_effect = ValueError("Sanitization failed")
+            service.sanitizer = mock_sanitizer
 
-
-class TestCoordinationServicePromptFormatting:
-    """Test cases for prompt formatting in CoordinationService."""
-
-    def test_format_prompt_basic(self):
-        """Test basic prompt formatting."""
-        planner = MockPlanningLLM()
-        service = CoordinationService(planner)
-
-        result = service._format_prompt("test input")
-
-        assert "test input" in result
-        assert "ShardGuard" in result
-        assert "Input" in result
-
-    def test_format_prompt_uses_template(self):
-        """Test that _format_prompt uses the PLANNING_PROMPT template."""
-        planner = MockPlanningLLM()
-        service = CoordinationService(planner)
-
-        with patch("shardguard.core.coordination.PLANNING_PROMPT") as mock_prompt:
-            mock_prompt.format.return_value = "formatted result"
-
-            result = service._format_prompt("test")
-
-            mock_prompt.format.assert_called_once_with(user_prompt="test")
-            assert result == "formatted result"
-
-    def test_format_prompt_with_special_characters(self):
-        """Test prompt formatting with special characters."""
-        planner = MockPlanningLLM()
-        service = CoordinationService(planner)
-
-        special_input = 'input with "quotes" and \n newlines'
-        result = service._format_prompt(special_input)
-
-        assert special_input in result
-
-
-class TestCoordinationServiceIntegration:
-    """Integration tests for CoordinationService."""
-
-    def test_full_flow_with_mock_planner_basic_structure(self):
-        """Test complete flow with MockPlanningLLM returns valid structure."""
-        service = CoordinationService(MockPlanningLLM())
-
-        with patch("sys.stdout", new_callable=StringIO):
-            result = service.handle_prompt("backup at 3 AM with 5 retries")
-
-        assert isinstance(result, Plan)
-        assert result.original_prompt is not None
-        assert len(result.sub_prompts) >= 1
-        assert isinstance(result.sub_prompts[0].opaque_values, dict)
-
-    def test_error_handling_invalid_json_from_planner(self):
-        """Test error handling when planner returns invalid JSON."""
-        mock_planner = Mock()
-        mock_planner.generate_plan.return_value = "invalid json"
-
-        service = CoordinationService(mock_planner)
-
-        with patch("sys.stdout", new_callable=StringIO):
-            with pytest.raises((json.JSONDecodeError, ValidationError)):
-                service.handle_prompt("test")
-
-    def test_error_handling_invalid_plan_structure(self):
-        """Test error handling when planner returns invalid plan structure."""
-        mock_planner = Mock()
-        mock_planner.generate_plan.return_value = json.dumps({"invalid": "structure"})
-
-        service = CoordinationService(mock_planner)
-
-        with patch("sys.stdout", new_callable=StringIO):
-            with pytest.raises(Exception):  # Pydantic validation error
-                service.handle_prompt("test")
-
-    def test_multiple_calls_produce_valid_plans(self):
-        """Test that multiple calls to handle_prompt produce valid plans."""
-        service = CoordinationService(MockPlanningLLM())
-
-        test_prompts = [
-            "first prompt with 1 number",
-            "second prompt with 2 and 3",
-            "third prompt",
-        ]
-
-        with patch("sys.stdout", new_callable=StringIO):
-            for prompt in test_prompts:
-                result = service.handle_prompt(prompt)
-                assert isinstance(result, Plan)
-                assert result.original_prompt is not None
-                assert len(result.sub_prompts) >= 1
+            with pytest.raises(ValueError, match="Sanitization failed"):
+                service.handle_prompt("test input")

@@ -108,13 +108,13 @@ class InputSanitizer:
         return cleaned, changes
 
     def _truncate_long_input(self, text: str) -> tuple[str, list[str]]:
-        """Truncate extremely long inputs to prevent DoS."""
-        changes = []
+        """Raise an error for extremely long inputs to prevent DoS."""
         if len(text) > self.max_length:
-            text = text[: self.max_length] + "... [truncated]"
-            changes.append(f"✓ Truncated input to {self.max_length:,} characters")
+            raise ValueError(
+                f"Input truncated: exceeds maximum length of {self.max_length} characters"
+            )
 
-        return text, changes
+        return text, []
 
     def _remove_dangerous_patterns(self, text: str) -> tuple[str, list[str]]:
         """Remove obvious injection attempts while preserving legitimate content."""
@@ -122,7 +122,9 @@ class InputSanitizer:
 
         for pattern, description in self.dangerous_patterns:
             before_removal = text
-            text = re.sub(pattern, "[REMOVED]", text, flags=re.IGNORECASE | re.DOTALL)
+            text = re.sub(
+                pattern, "", text, flags=re.IGNORECASE | re.DOTALL
+            )  # Completely remove matches
             if text != before_removal:
                 changes.append(f"✓ Removed {description}")
 

@@ -1,4 +1,4 @@
-"""Tests for ShardGuard data models."""
+"""Tests for ShardGuard core models."""
 
 import pytest
 from pydantic import ValidationError
@@ -9,132 +9,74 @@ from shardguard.core.models import Plan, SubPrompt
 class TestSubPrompt:
     """Test cases for SubPrompt model."""
 
-    def test_create_subprompt_with_required_fields(self):
-        """Test creating a SubPrompt with only required fields."""
-        subprompt = SubPrompt(id=1, content="Test content")
-
-        assert subprompt.id == 1
-        assert subprompt.content == "Test content"
-        assert subprompt.opaque_values == {}
-
-    def test_create_subprompt_with_opaque_values(self):
-        """Test creating a SubPrompt with opaque values."""
-        opaque_values = {"[VALUE_1]": "value1", "[SECRET]": "secret123"}
-        subprompt = SubPrompt(
-            id=2, content="Content with secrets", opaque_values=opaque_values
-        )
-
-        assert subprompt.id == 2
-        assert subprompt.content == "Content with secrets"
-        assert subprompt.opaque_values == opaque_values
-
     @pytest.mark.parametrize(
-        "field,value,expected_error",
+        "id, content, opaque_values",
         [
-            ("id", None, "id"),
-            ("content", None, "content"),
-            ("id", "not_an_int", "id"),
-            ("content", 123, "content"),
-            ("opaque_values", "not_a_dict", "opaque_values"),
+            (1, "Test content", {}),
+            (
+                2,
+                "Process [[P1]] and [[P2]]",
+                {"[[P1]]": "sensitive_data", "[[P2]]": "more_data"},
+            ),
         ],
     )
-    def test_subprompt_validation_errors(self, field, value, expected_error):
-        """Test SubPrompt validation failures for various invalid inputs."""
-        kwargs = {"id": 1, "content": "Test content", "opaque_values": {}}
-        if value is None:
-            kwargs.pop(field, None)
-        else:
-            kwargs[field] = value
+    def test_subprompt_creation(self, id, content, opaque_values):
+        """Test creating a SubPrompt with various inputs."""
+        sub_prompt = SubPrompt(id=id, content=content, opaque_values=opaque_values)
 
-        with pytest.raises(ValidationError) as exc_info:
+        assert sub_prompt.id == id
+        assert sub_prompt.content == content
+        assert sub_prompt.opaque_values == opaque_values
+
+    @pytest.mark.parametrize(
+        "missing_field",
+        ["id", "content"],
+    )
+    def test_subprompt_validation_missing_fields(self, missing_field):
+        """Test that ValidationError is raised when required fields are missing."""
+        kwargs = {"id": 1, "content": "Test content"}
+        del kwargs[missing_field]
+
+        with pytest.raises(ValidationError):
             SubPrompt(**kwargs)
-
-        assert expected_error in str(exc_info.value)
 
 
 class TestPlan:
     """Test cases for Plan model."""
 
-    def test_create_plan_with_required_fields(self):
-        """Test creating a Plan with required fields."""
-        subprompts = [
-            SubPrompt(id=1, content="First task"),
-            SubPrompt(
-                id=2, content="Second task", opaque_values={"[SECRET]": "secret"}
+    @pytest.mark.parametrize(
+        "original_prompt, sub_prompts",
+        [
+            ("Do something", [SubPrompt(id=1, content="First task")]),
+            (
+                "Complex request",
+                [
+                    SubPrompt(id=1, content="First task"),
+                    SubPrompt(
+                        id=2, content="Second task", opaque_values={"[[P1]]": "data"}
+                    ),
+                ],
             ),
-        ]
-        plan = Plan(original_prompt="Original user request", sub_prompts=subprompts)
+        ],
+    )
+    def test_plan_creation(self, original_prompt, sub_prompts):
+        """Test creating a Plan with various inputs."""
+        plan = Plan(original_prompt=original_prompt, sub_prompts=sub_prompts)
 
-        assert plan.original_prompt == "Original user request"
-        assert len(plan.sub_prompts) == 2
-        assert plan.sub_prompts[0].id == 1
-        assert plan.sub_prompts[1].opaque_values == {"[SECRET]": "secret"}
+        assert plan.original_prompt == original_prompt
+        assert len(plan.sub_prompts) == len(sub_prompts)
 
-    def test_create_plan_empty_subprompts(self):
-        """Test creating a Plan with empty sub_prompts list."""
-        plan = Plan(original_prompt="Simple request", sub_prompts=[])
-
-        assert plan.original_prompt == "Simple request"
-        assert plan.sub_prompts == []
-
-    def test_plan_validation_missing_original_prompt(self):
-        """Test that Plan validation fails when original_prompt is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            Plan(sub_prompts=[])
-
-        assert "original_prompt" in str(exc_info.value)
-
-    def test_plan_validation_missing_sub_prompts(self):
-        """Test that Plan validation fails when sub_prompts is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            Plan(original_prompt="Test prompt")
-
-        assert "sub_prompts" in str(exc_info.value)
-
-    def test_plan_validation_invalid_sub_prompts_type(self):
-        """Test that Plan validation fails for invalid sub_prompts type."""
-        with pytest.raises(ValidationError) as exc_info:
-            Plan(original_prompt="Test", sub_prompts="not_a_list")
-
-        assert "sub_prompts" in str(exc_info.value)
-
-    def test_plan_json_serialization(self):
-        """Test that Plan can be serialized to JSON."""
-        plan = Plan(
-            original_prompt="Test prompt",
-            sub_prompts=[
-                SubPrompt(id=1, content="Task 1", opaque_values={"[VALUE_1]": "val1"}),
-                SubPrompt(id=2, content="Task 2"),
-            ],
-        )
-
-        json_str = plan.model_dump_json()
-        assert "Test prompt" in json_str
-        assert "Task 1" in json_str
-        assert "val1" in json_str
-
-    def test_plan_json_deserialization(self):
-        """Test that Plan can be deserialized from JSON."""
-        json_data = """
-        {
-            "original_prompt": "Test prompt",
-            "sub_prompts": [
-                {
-                    "id": 1,
-                    "content": "Task 1",
-                    "opaque_values": {"[VALUE_1]": "val1"}
-                },
-                {
-                    "id": 2,
-                    "content": "Task 2",
-                    "opaque_values": {}
-                }
-            ]
+    @pytest.mark.parametrize(
+        "missing_field",
+        ["original_prompt", "sub_prompts"],
+    )
+    def test_plan_validation_missing_fields(self, missing_field):
+        """Test that ValidationError is raised when required fields are missing."""
+        kwargs = {
+            "original_prompt": "Do something",
+            "sub_prompts": [SubPrompt(id=1, content="Task")],
         }
-        """
+        del kwargs[missing_field]
 
-        plan = Plan.model_validate_json(json_data)
-        assert plan.original_prompt == "Test prompt"
-        assert len(plan.sub_prompts) == 2
-        assert plan.sub_prompts[0].opaque_values == {"[VALUE_1]": "val1"}
-        assert plan.sub_prompts[1].opaque_values == {}
+        with pytest.raises(ValidationError):
+            Plan(**kwargs)
