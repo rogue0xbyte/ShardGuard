@@ -1,9 +1,11 @@
 import typer
+from rich.console import Console
 
 from shardguard.core.coordination import CoordinationService
 from shardguard.core.planning import PlanningLLM
 
 app = typer.Typer(help="ShardGuard CLI")
+console = Console()
 
 
 @app.command()
@@ -21,26 +23,24 @@ def plan(
     try:
         if use_ollama:
             planner = PlanningLLM(model=model, base_url=ollama_url)
-            typer.echo(
-                f"[dim]Using Ollama model: {model} at {ollama_url}[/dim]", err=True
-            )
+            console.print(f"[dim]Using Ollama model: {model} at {ollama_url}[/dim]")
         else:
             # Import MockPlanningLLM only when needed for development/testing
             from shardguard.dev_utils import MockPlanningLLM
 
             planner = MockPlanningLLM()
-            typer.echo("[dim]Using MockPlanningLLM for development[/dim]", err=True)
+            console.print("[dim]Using MockPlanningLLM for development[/dim]")
 
         coord = CoordinationService(planner)
         plan_obj = coord.handle_prompt(prompt)
         typer.echo(plan_obj.model_dump_json(indent=2))
 
     except ConnectionError as e:
-        typer.echo(f"[bold red]Connection Error:[/bold red] {e}", err=True)
-        typer.echo("Make sure Ollama is running: `ollama serve`", err=True)
+        console.print(f"[bold red]Connection Error:[/bold red] {e}")
+        console.print("Make sure Ollama is running: `ollama serve`")
         raise typer.Exit(1)
     except Exception as e:
-        typer.echo(f"[bold red]Error:[/bold red] {e}", err=True)
+        console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(1)
 
 

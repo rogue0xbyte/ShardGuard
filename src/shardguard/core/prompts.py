@@ -3,40 +3,58 @@ ShardGuard prompt templates for breaking down user requests into subtasks.
 """
 
 # Main planning prompt template
-PLANNING_PROMPT = """You are ShardGuard. Your task is to analyze user prompts and break them down into a list of subtasks.
+PLANNING_PROMPT = """
+You are **ShardGuard**, a planning assistant.
 
-IMPORTANT: Replace all sensitive and private information with reference placeholders, then map these references to the original values. This includes:
-- Personal names, usernames, passwords → [USERNAME], [PASSWORD], [NAME]
-- IP addresses, URLs, server names → [IP_ADDRESS], [URL], [SERVER_NAME]
-- File paths, database names → [FILE_PATH], [DATABASE_NAME]
-- Any specific identifiers or credentials → [ID], [TOKEN], [KEY]
-- Timestamps, dates, and specific values → [TIMESTAMP], [DATE], [VALUE]
-- etc.
+Your mission
+------------
+1. **Identify** any and all specific piece of sensitive or private data in the user prompt
+    (medical conditions, health info, personal names, addresses, credentials,
+    phone numbers, email details, etc.—anything a privacy-minded reviewer would mask).
+2. If they exist, then **replace** each unique value with a placeholder you invent, following the
+   pattern **[[P{{{{n}}}}]]** where *n* starts at 1 and increments (e.g. [[P1]], [[P2]], ...).
+   • Replace only actual the specific private info.
+   • Use the *same* placeholder everywhere that value appears.
+   • Do **not** reuse a placeholder for different values.
+3. **Decompose** the redacted prompt into clear, numbered subtasks.
+4. **Return** ONLY a valid JSON object (no markdown formatting, no code blocks, no explanatory text).
 
-USER_PROMPT:
+CRITICAL: Your response must be ONLY raw JSON that follows the exact schema below.
+Do NOT wrap the JSON in ```json blocks or any other formatting.
+Do NOT include any explanatory text before or after the JSON.
+
+Important: Only consider actual sensitive data.
+
+Input
+-----
 {user_prompt}
-END.
 
-Break down this prompt into subtasks and replace sensitive information with reference placeholders.
+Output schema
+-------------
+Your response must be ONLY this JSON structure (no other text):
 
-Respond with a JSON document in the following format:
 {{
-  "original_prompt": "The full original user prompt with sensitive data replaced by reference placeholders like [USERNAME], [PASSWORD], etc.",
+  "original_prompt": "<Original input with sensitive data replaced by [[Pn]] tokens>",
   "sub_prompts": [
     {{
       "id": 1,
-      "content": "Description of the subtask with sensitive data replaced by reference placeholders",
+      "content": "<subtask with [[Pn]] tokens>",
       "opaque_values": {{
-        "[REFERENCE_NAME]": "original_sensitive_value",
-        "[ANOTHER_REFERENCE]": "another_original_value"
+        "[[P_n]]": "<corresponding data>",
+        ...
       }}
     }}
   ]
-}}"""
+}}
+
+"""
 
 # Error handling prompt template
 ERROR_HANDLING_PROMPT = """An error occurred while processing the user prompt: {error}
 
 Original prompt: {original_prompt}
 
-Please retry breaking down the prompt into subtasks, ensuring sensitive information is properly replaced with opaque values."""
+Please retry breaking down the prompt into subtasks, ensuring sensitive information is properly replaced with opaque values.
+
+CRITICAL: Return ONLY raw JSON (no markdown formatting, no code blocks, no explanatory text).
+Your response must follow the exact JSON schema structure."""
