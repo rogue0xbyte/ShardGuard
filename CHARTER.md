@@ -1,3 +1,5 @@
+Note, this is currently not an OpenSSF project.  I am just using the template because we are likely to go that direction later.   Please ignore this for now.
+
 # Technical Charter for Open Source Security Foundation
 
 [COMMUNITY NAME - Working Group | Technical Initiative]
