@@ -1,0 +1,44 @@
+# Markdownlint configuration
+# See https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+# Default state for all rules
+default: true
+
+# MD013 - Line length
+MD013:
+  # Number of characters
+  line_length: 120
+  # Number of characters for headings
+  heading_line_length: 120
+  # Number of characters for code blocks
+  code_block_line_length: 120
+  # Include code blocks
+  code_blocks: true
+  # Include tables
+  tables: true
+  # Include headings
+  headings: true
+  # Include headings when they are strict
+  strict: false
+  # Stern length checking
+  stern: false
+
+# MD024 - Multiple headings with the same content
+MD024:
+  # Only check sibling headings
+  siblings_only: true
+
+# MD026 - Trailing punctuation in heading
+MD026:
+  # Punctuation characters
+  punctuation: ".,;:!。，；：！"
+
+# MD033 - Inline HTML
+MD033:
+  # Allowed elements
+  allowed_elements: ["br", "sub", "sup", "b", "i", "em", "strong", "code", "kbd", "var", "samp"]
+
+# MD046 - Code block style
+MD046:
+  # Block style
+  style: "consistent"
