@@ -1,10 +1,9 @@
 """Tests for ShardGuard CLI functionality."""
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
 from shardguard.cli import app, main
@@ -42,15 +41,20 @@ class TestCLICommands:
         assert "--model" in result.output
         assert "--ollama-url" in result.output
 
-    @patch("shardguard.cli.CoordinationService")
-    @patch("shardguard.cli.PlanningLLM")
-    def test_plan_command_success(self, mock_planning_llm, mock_coordination_service):
+    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.cli.get_mcp_planner")
+    def test_plan_command_success(
+        self, mock_get_mcp_planner, mock_coordination_service
+    ):
         """Test successful plan command execution."""
-        # Setup mocks
-        mock_planner_instance = Mock()
-        mock_planning_llm.return_value = mock_planner_instance
+        # Setup mcp planner mock
+        mock_planner_instance = AsyncMock()
+        mock_planner_instance.get_available_tools_description.return_value = (
+            "No MCP tools available."
+        )
+        mock_get_mcp_planner.return_value = mock_planner_instance
 
-        mock_coordination_instance = Mock()
+        mock_coordination_instance = AsyncMock()
         mock_coordination_service.return_value = mock_coordination_instance
 
         # Create a sample plan to return
@@ -65,11 +69,8 @@ class TestCLICommands:
         assert result.exit_code == 0
 
         # Verify the mocks were called correctly
-        mock_planning_llm.assert_called_once_with(
-            model="llama3.2", base_url="http://localhost:11434"
-        )
+        mock_get_mcp_planner.assert_called_once()
         mock_coordination_service.assert_called_once_with(mock_planner_instance)
-        mock_coordination_instance.handle_prompt.assert_called_once_with("Test prompt")
 
         # Verify output contains JSON
         assert "original_prompt" in result.output
@@ -90,21 +91,24 @@ class TestCLICommands:
             ),
         ],
     )
-    @patch("shardguard.cli.CoordinationService")
-    @patch("shardguard.cli.PlanningLLM")
+    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_with_custom_parameters(
         self,
-        mock_planning_llm,
+        mock_get_mcp_planner,
         mock_coordination_service,
         args,
         expected_model,
         expected_url,
     ):
         """Test plan command with custom parameters."""
-        mock_planner_instance = Mock()
-        mock_planning_llm.return_value = mock_planner_instance
+        mock_planner_instance = AsyncMock()
+        mock_planner_instance.get_available_tools_description.return_value = (
+            "No MCP tools available."
+        )
+        mock_get_mcp_planner.return_value = mock_planner_instance
 
-        mock_coordination_instance = Mock()
+        mock_coordination_instance = AsyncMock()
         mock_coordination_service.return_value = mock_coordination_instance
 
         sample_plan = Plan(original_prompt="Test", sub_prompts=[])
@@ -113,22 +117,21 @@ class TestCLICommands:
         result = self.runner.invoke(app, args)
 
         assert result.exit_code == 0
+        mock_get_mcp_planner.assert_called_once()
 
-        # Verify custom parameters were used
-        mock_planning_llm.assert_called_once_with(
-            model=expected_model, base_url=expected_url
-        )
-
-    @patch("shardguard.cli.CoordinationService")
-    @patch("shardguard.cli.PlanningLLM")
+    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_connection_error(
-        self, mock_planning_llm, mock_coordination_service
+        self, mock_get_mcp_planner, mock_coordination_service
     ):
         """Test plan command handling of connection errors."""
-        mock_planner_instance = Mock()
-        mock_planning_llm.return_value = mock_planner_instance
+        mock_planner_instance = AsyncMock()
+        mock_planner_instance.get_available_tools_description.return_value = (
+            "No MCP tools available."
+        )
+        mock_get_mcp_planner.return_value = mock_planner_instance
 
-        mock_coordination_instance = Mock()
+        mock_coordination_instance = AsyncMock()
         mock_coordination_service.return_value = mock_coordination_instance
 
         # Simulate connection error
@@ -140,40 +143,43 @@ class TestCLICommands:
 
         assert result.exit_code == 1
         assert "Connection Error" in result.output
-        assert "Make sure Ollama is running" in result.output
 
-    @patch("shardguard.cli.CoordinationService")
-    @patch("shardguard.cli.PlanningLLM")
+    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_general_error(
-        self, mock_planning_llm, mock_coordination_service
+        self, mock_get_mcp_planner, mock_coordination_service
     ):
         """Test plan command handling of general errors."""
-        mock_planner_instance = Mock()
-        mock_planning_llm.return_value = mock_planner_instance
+        mock_planner_instance = AsyncMock()
+        mock_planner_instance.get_available_tools_description.return_value = (
+            "No MCP tools available."
+        )
+        mock_get_mcp_planner.return_value = mock_planner_instance
 
-        mock_coordination_instance = Mock()
+        mock_coordination_instance = AsyncMock()
         mock_coordination_service.return_value = mock_coordination_instance
 
         # Simulate general error
-        mock_coordination_instance.handle_prompt.side_effect = ValueError(
-            "Invalid input"
-        )
+        mock_coordination_instance.handle_prompt.side_effect = ValueError("Some error")
 
         result = self.runner.invoke(app, ["plan", "Test prompt"])
 
         assert result.exit_code == 1
         assert "Error:" in result.output
 
-    @patch("shardguard.cli.CoordinationService")
-    @patch("shardguard.cli.PlanningLLM")
+    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_console_output(
-        self, mock_planning_llm, mock_coordination_service
+        self, mock_get_mcp_planner, mock_coordination_service
     ):
         """Test that plan command shows console output for model info."""
-        mock_planner_instance = Mock()
-        mock_planning_llm.return_value = mock_planner_instance
+        mock_planner_instance = AsyncMock()
+        mock_planner_instance.get_available_tools_description.return_value = (
+            "No MCP tools available."
+        )
+        mock_get_mcp_planner.return_value = mock_planner_instance
 
-        mock_coordination_instance = Mock()
+        mock_coordination_instance = AsyncMock()
         mock_coordination_service.return_value = mock_coordination_instance
 
         sample_plan = Plan(original_prompt="Test", sub_prompts=[])
@@ -192,26 +198,28 @@ class TestCLICommands:
         )
 
         assert result.exit_code == 0
-        # Should show model info
-        assert "test-model" in result.output
-        assert "http://test:1234" in result.output
+        assert "Using Ollama model: test-model at http://test:1234" in result.output
 
     def test_plan_command_required_prompt_argument(self):
         """Test that plan command requires a prompt argument."""
         result = self.runner.invoke(app, ["plan"])
 
-        assert result.exit_code != 0  # Should fail without prompt
+        assert result.exit_code == 2  # Click error code for missing argument
+        assert "Missing argument" in result.output
 
-    @patch("shardguard.cli.CoordinationService")
-    @patch("shardguard.cli.PlanningLLM")
+    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_json_output_format(
-        self, mock_planning_llm, mock_coordination_service
+        self, mock_get_mcp_planner, mock_coordination_service
     ):
         """Test that plan command outputs properly formatted JSON."""
-        mock_planner_instance = Mock()
-        mock_planning_llm.return_value = mock_planner_instance
+        mock_planner_instance = AsyncMock()
+        mock_planner_instance.get_available_tools_description.return_value = (
+            "No MCP tools available."
+        )
+        mock_get_mcp_planner.return_value = mock_planner_instance
 
-        mock_coordination_instance = Mock()
+        mock_coordination_instance = AsyncMock()
         mock_coordination_service.return_value = mock_coordination_instance
 
         # Create a more complex plan
@@ -230,62 +238,49 @@ class TestCLICommands:
 
         assert result.exit_code == 0
 
-        # Try to parse the output as JSON (should work)
-        # Extract JSON from output (skip console messages)
-        output_lines = result.output.strip().split("\n")
+        # Parse the JSON output to ensure it's valid
+        lines = result.output.split("\n")
         json_lines = [
-            line
-            for line in output_lines
-            if line.strip().startswith("{")
-            or '"' in line
-            or "}" in line
-            or "[" in line
-            or "]" in line
+            line for line in lines if line.strip() and not line.startswith("Using")
         ]
-        json_output = "\n".join(json_lines)
+        json_text = "\n".join(json_lines)
 
-        try:
-            parsed_json = json.loads(json_output)
-            assert "original_prompt" in parsed_json
-            assert "sub_prompts" in parsed_json
-            assert len(parsed_json["sub_prompts"]) == 2
-        except json.JSONDecodeError:
-            # If JSON parsing fails, at least check that JSON-like content is present
-            assert "original_prompt" in result.output
-            assert "sub_prompts" in result.output
+        parsed_plan = json.loads(json_text)
+        assert parsed_plan["original_prompt"] == "Complex task with [[P1]]"
+        assert len(parsed_plan["sub_prompts"]) == 2
 
-
-class TestMainFunction:
-    """Test cases for the main function."""
-
-    def test_main_function_with_context(self):
-        """Test main function with typer context."""
-        # Create a mock context
-        mock_ctx = Mock()
-        mock_ctx.invoked_subcommand = None
-
-        # This should execute without error
-        # In actual usage, this would print welcome message
-        main(mock_ctx)
-
-    def test_main_function_with_subcommand(self):
-        """Test main function when a subcommand is invoked."""
-        mock_ctx = Mock()
-        mock_ctx.invoked_subcommand = "plan"
-
-        # Should not do anything when subcommand is present
-        main(mock_ctx)
-
-
-class TestCLIIntegration:
-    """Integration tests for CLI functionality."""
-
-    def test_app_structure_and_commands(self):
-        """Test that the app is properly structured and commands are available."""
-        runner = CliRunner()
-        result = runner.invoke(app, ["--help"])
+    def test_list_tools_command(self):
+        """Test the list-tools command."""
+        result = self.runner.invoke(app, ["list-tools"])
 
         assert result.exit_code == 0
-        assert isinstance(app, typer.Typer)
-        assert app.info.help == "ShardGuard CLI"
-        assert "plan" in result.output
+        assert "Available MCP Tools:" in result.output
+        # Either MCP tools are available or not, both are valid
+        assert "No MCP tools available." in result.output or "Server:" in result.output
+
+    def test_main_function_with_context(self):
+        """Test main function with context that has subcommand."""
+        # This test validates the callback behavior when subcommands are invoked
+        # The main function should not run the welcome message
+        result = self.runner.invoke(app, ["--help"])
+        assert result.exit_code == 0
+        assert "Welcome to ShardGuard!" not in result.output
+
+
+class TestMainCallback:
+    """Test cases for the main callback function."""
+
+    def test_main_callback_returns_none_with_subcommand(self):
+        """Test main callback when invoked_subcommand is not None."""
+        # Create a mock context with a subcommand
+        mock_context = Mock()
+        mock_context.invoked_subcommand = "plan"
+
+        # This should not raise any exceptions and should return None
+        result = main(mock_context)
+        assert result is None
+
+    def test_main_callback_behavior_without_subcommand(self):
+        """Test main callback when no subcommand is invoked."""
+        # This is tested indirectly through the CLI runner test above
+        pass

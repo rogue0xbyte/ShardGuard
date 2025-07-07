@@ -92,17 +92,22 @@ class TestPlanningLLM:
 
     @patch("httpx.Client.post")
     def test_generate_plan_request_error(self, mock_post):
-        """Test handling of request errors."""
+        """Test handling of request errors with fallback response."""
         mock_post.side_effect = httpx.RequestError("Connection failed")
 
         llm = PlanningLLM()
 
-        with pytest.raises(ConnectionError, match="Failed to connect to Ollama"):
-            llm.generate_plan("test prompt")
+        result = llm.generate_plan("test prompt")
+
+        # Should return fallback JSON response instead of raising
+        assert "Error occurred" in result
+        parsed = json.loads(result)
+        assert "test prompt" in parsed["original_prompt"]
+        assert len(parsed["sub_prompts"]) > 0
 
     @patch("httpx.Client.post")
     def test_generate_plan_http_error(self, mock_post):
-        """Test handling of HTTP status errors."""
+        """Test handling of HTTP status errors with fallback response."""
         mock_response = Mock()
         mock_response.status_code = 500
         mock_response.text = "Internal Server Error"
@@ -112,12 +117,17 @@ class TestPlanningLLM:
 
         llm = PlanningLLM()
 
-        with pytest.raises(RuntimeError, match="Ollama API error 500"):
-            llm.generate_plan("test prompt")
+        result = llm.generate_plan("test prompt")
+
+        # Should return fallback JSON response instead of raising
+        assert "Error occurred" in result
+        parsed = json.loads(result)
+        assert "test prompt" in parsed["original_prompt"]
+        assert len(parsed["sub_prompts"]) > 0
 
     @patch("httpx.Client.post")
     def test_generate_plan_invalid_json_from_api(self, mock_post):
-        """Test handling of invalid JSON from API."""
+        """Test handling of invalid JSON from API with fallback response."""
         mock_response = Mock()
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_response.raise_for_status.return_value = None
@@ -125,8 +135,13 @@ class TestPlanningLLM:
 
         llm = PlanningLLM()
 
-        with pytest.raises(ValueError, match="Invalid JSON response from Ollama"):
-            llm.generate_plan("test prompt")
+        result = llm.generate_plan("test prompt")
+
+        # Should return fallback JSON response instead of raising
+        assert "Error occurred" in result
+        parsed = json.loads(result)
+        assert "test prompt" in parsed["original_prompt"]
+        assert len(parsed["sub_prompts"]) > 0
 
     def test_extract_json_from_response_valid_json(self):
         """Test JSON extraction from response with valid JSON."""
@@ -173,8 +188,11 @@ class TestPlanningLLM:
         response_text = "Sorry, I cannot process this request. No JSON here."
         result = llm._extract_json_from_response(response_text)
 
-        # Should return original response when no valid JSON found
-        assert result == response_text
+        # Should return fallback JSON response when no valid JSON found
+        parsed = json.loads(result)
+        assert "original_prompt" in parsed
+        assert "sub_prompts" in parsed
+        assert response_text in parsed["original_prompt"]
 
     def test_extract_json_from_response_malformed_json(self):
         """Test JSON extraction with malformed JSON."""
@@ -185,8 +203,11 @@ class TestPlanningLLM:
         )
         result = llm._extract_json_from_response(response_text)
 
-        # Should return original response since JSON is malformed
-        assert result == response_text
+        # Should return fallback JSON response since JSON is malformed
+        parsed = json.loads(result)
+        assert "original_prompt" in parsed
+        assert "sub_prompts" in parsed
+        assert "Result:" in parsed["original_prompt"]
 
     def test_context_manager_usage(self):
         """Test using PlanningLLM as a context manager."""
@@ -231,3 +252,39 @@ class TestPlanningLLM:
         # Verify correct URL is used
         call_args = mock_post.call_args
         assert call_args[0][0] == "http://remote:8080/api/generate"
+
+
+class TestPlanningLLMWithMCP:
+    """Test cases for PlanningLLM with MCP server integration."""
+
+    def test_planning_llm_has_mcp_integration(self):
+        """Test that PlanningLLM has MCP integration capability."""
+        llm = PlanningLLM()
+
+        # Should be able to get tools description
+        description = llm.get_available_tools_description()
+        assert isinstance(description, str)
+
+    @patch("httpx.Client.post")
+    def test_generate_plan_basic_functionality(self, mock_post):
+        """Test basic generate_plan functionality."""
+        # Setup mock response
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "response": '{"original_prompt": "test", "sub_prompts": []}'
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+
+        llm = PlanningLLM()
+        result = llm.generate_plan("test prompt")
+
+        # Should return a JSON string
+        assert isinstance(result, str)
+
+        # Verify the API was called
+        mock_post.assert_called_once()
+
+
+class TestMockPlanningLLM:
+    """Tests for the MockPlanningLLM class."""
