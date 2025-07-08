@@ -8,8 +8,8 @@ from shardguard.core.coordination import CoordinationService
 from shardguard.core.models import Plan
 
 
-class MockAsyncPlanningLLM:
-    """Mock async planning LLM for testing."""
+class MockPlanningLLM:
+    """Mock planning LLM for testing."""
 
     def __init__(self, response: str | None = None):
         self.response = response or '{"original_prompt": "test", "sub_prompts": []}'
@@ -113,7 +113,7 @@ class TestCoordinationService:
         self, json_response, expected_original_prompt, expected_sub_prompts
     ):
         """Test handling prompts with various responses."""
-        mock_planner = MockAsyncPlanningLLM(json_response.strip())
+        mock_planner = MockPlanningLLM(json_response.strip())
 
         with patch("builtins.open", Mock()):
             service = CoordinationService(mock_planner)
@@ -152,7 +152,7 @@ class TestCoordinationService:
 
     def test_format_prompt_method(self):
         """Test the _format_prompt method."""
-        mock_planner = MockAsyncPlanningLLM()
+        mock_planner = MockPlanningLLM()
 
         with patch("builtins.open", Mock()):
             service = CoordinationService(mock_planner)
@@ -168,7 +168,7 @@ class TestCoordinationService:
     @pytest.mark.asyncio
     async def test_handle_prompt_invalid_json_from_planner(self):
         """Test handling of invalid JSON from planner."""
-        mock_planner = MockAsyncPlanningLLM("invalid json response")
+        mock_planner = MockPlanningLLM("invalid json response")
 
         with patch("builtins.open", Mock()):
             service = CoordinationService(mock_planner)
@@ -180,7 +180,7 @@ class TestCoordinationService:
     async def test_handle_prompt_missing_required_fields(self):
         """Test handling of JSON missing required fields."""
         incomplete_json = '{"original_prompt": "test"}'  # Missing sub_prompts
-        mock_planner = MockAsyncPlanningLLM(incomplete_json)
+        mock_planner = MockPlanningLLM(incomplete_json)
 
         with patch("builtins.open", Mock()):
             service = CoordinationService(mock_planner)
@@ -197,7 +197,7 @@ class TestCoordinationService:
             "sub_prompts": []
         }
         """
-        mock_planner = MockAsyncPlanningLLM(json_response.strip())
+        mock_planner = MockPlanningLLM(json_response.strip())
 
         with patch("builtins.open", Mock()):
             service = CoordinationService(mock_planner)

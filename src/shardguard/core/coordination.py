@@ -1,19 +1,14 @@
-from typing import Protocol
-
 from rich.console import Console
 
 from shardguard.core.models import Plan
+from shardguard.core.planning import PlanningLLM
 from shardguard.core.prompts import PLANNING_PROMPT
 
 
-class AsyncPlanningLLMProtocol(Protocol):
-    async def generate_plan(self, prompt: str) -> str: ...
-
-
 class CoordinationService:
-    """Async coordination service for MCP-integrated planning."""
+    """Coordination service for planning."""
 
-    def __init__(self, planner: AsyncPlanningLLMProtocol):
+    def __init__(self, planner: PlanningLLM):
         self.planner = planner
         self.console = Console()
 
