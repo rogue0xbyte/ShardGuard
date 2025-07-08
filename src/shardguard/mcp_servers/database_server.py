@@ -71,7 +71,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     if name == "query_database":
         query = arguments["query"]
         database = arguments.get("database", "default")
-        result = "🗄️ [DATABASE PoC] Would execute query:\n"
+        result = "[DATABASE PoC] Would execute query:\n"
         result += f"  Database: {database}\n"
         result += f"  Query: {query[:100]}{'...' if len(query) > 100 else ''}"
         return [TextContent(type="text", text=result)]
@@ -79,14 +79,14 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     elif name == "backup_database":
         database = arguments["database"]
         backup_name = arguments["backup_name"]
-        result = "🗄️ [DATABASE PoC] Would backup database:\n"
+        result = "[DATABASE PoC] Would backup database:\n"
         result += f"  Database: {database}\n"
         result += f"  Backup file: {backup_name}"
         return [TextContent(type="text", text=result)]
 
     elif name == "list_tables":
         database = arguments["database"]
-        result = f"🗄️ [DATABASE PoC] Would list tables in database: {database}"
+        result = f"[DATABASE PoC] Would list tables in database: {database}"
         return [TextContent(type="text", text=result)]
 
     else:

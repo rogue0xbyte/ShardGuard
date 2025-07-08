@@ -30,7 +30,10 @@ class TestCLICommands:
 
         assert result.exit_code == 0
         assert "Welcome to ShardGuard!" in result.output
-        assert "sub-commands" in result.output
+        assert (
+            "Available commands:" in result.output
+            or "execute, list-tools, plan" in result.output
+        )
 
     def test_plan_command_help(self):
         """Test plan command help."""

@@ -55,7 +55,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         recipient = arguments["recipient"]
         subject = arguments["subject"]
         body = arguments["body"]
-        result = "📧 [EMAIL PoC] Would send email:\n"
+        result = "[EMAIL PoC] Would send email:\n"
         result += f"  To: {recipient}\n"
         result += f"  Subject: {subject}\n"
         result += f"  Body: {body[:100]}{'...' if len(body) > 100 else ''}"
@@ -63,7 +63,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
     elif name == "list_emails":
         limit = arguments.get("limit", 10)
-        result = f"📧 [EMAIL PoC] Would list {limit} recent emails"
+        result = f"[EMAIL PoC] Would list {limit} recent emails"
         return [TextContent(type="text", text=result)]
 
     else:

@@ -9,6 +9,8 @@ from typing import Any
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from .llm_providers import LLMProviderFactory
+
 logger = logging.getLogger(__name__)
 
 
@@ -158,17 +160,34 @@ class MCPClient:
 
 
 class MCPIntegratedPlanningLLM:
-    """Enhanced PlanningLLM with MCP integration."""
+    """Enhanced PlanningLLM with MCP integration and flexible provider support."""
 
     def __init__(
-        self, model: str = "llama3.2", base_url: str = "http://localhost:11434"
+        self,
+        provider_type: str = "ollama",
+        model: str = "llama3.2",
+        base_url: str = "http://localhost:11434",
+        api_key: str | None = None,
     ):
-        """Initialize with MCP client integration."""
+        """Initialize with MCP client integration and configurable LLM provider."""
+        self.provider_type = provider_type
         self.model = model
         self.base_url = base_url
+        self.api_key = api_key
         self.mcp_client = MCPClient()
 
-        # Import httpx here to avoid import errors if not available
+        # Create the appropriate LLM provider
+        provider_kwargs = {}
+        if provider_type.lower() == "ollama":
+            provider_kwargs["base_url"] = base_url
+        elif provider_type.lower() == "gemini":
+            provider_kwargs["api_key"] = api_key
+
+        self.llm_provider = LLMProviderFactory.create_provider(
+            provider_type=provider_type, model=model, **provider_kwargs
+        )
+
+        # Keep legacy client for compatibility (deprecated)
         try:
             import httpx
 
@@ -207,8 +226,7 @@ class MCPIntegratedPlanningLLM:
         return await self.mcp_client.call_tool(server_name, tool_name, arguments)
 
     async def generate_plan(self, prompt: str) -> str:
-        """Generate a plan using Ollama LLM, including MCP tool descriptions."""
-        # Call the async version directly to avoid method override issues
+        """Generate a plan using the configured LLM provider, including MCP tool descriptions."""
         tools_description = await self.mcp_client.get_tools_description()
 
         # Create enhanced prompt with tools
@@ -220,47 +238,14 @@ class MCPIntegratedPlanningLLM:
         # Log the full prompt being sent to the model for debugging
         logger.debug("Full prompt sent to model:\n%s", enhanced_prompt)
 
-        if not self.client:
-            # Return mock response if httpx not available
-            return json.dumps(
-                {
-                    "original_prompt": prompt,
-                    "sub_prompts": [
-                        {
-                            "id": 1,
-                            "content": "This is a mock response - httpx not available",
-                            "opaque_values": {},
-                            "suggested_tools": ["file-operations.read_file"],
-                        }
-                    ],
-                }
-            )
-
         try:
-            response = self.client.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": enhanced_prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.1,
-                        "top_p": 0.9,
-                        "num_predict": 2048,
-                    },
-                },
-            )
-            response.raise_for_status()
-
-            result = response.json()
-            raw_response = result.get("response", "")
-
+            raw_response = await self.llm_provider.generate_response(enhanced_prompt)
             # Extract JSON from the response
             json_response = self._extract_json_from_response(raw_response)
             return json_response
-
         except Exception as e:
-            # Return mock response on error
+            logger.error(f"Error generating plan: {e}")
+            # Return fallback response
             return json.dumps(
                 {
                     "original_prompt": prompt,
@@ -276,7 +261,7 @@ class MCPIntegratedPlanningLLM:
             )
 
     def generate_plan_sync(self, prompt: str) -> str:
-        """Generate a plan using Ollama LLM (sync version)."""
+        """Generate a plan using the configured LLM provider (sync version)."""
         tools_description = self.get_available_tools_description_sync()
 
         # Create enhanced prompt with tools
@@ -288,47 +273,14 @@ class MCPIntegratedPlanningLLM:
         # Log the full prompt being sent to the model for debugging
         logger.debug("Full prompt sent to model (sync):\n%s", enhanced_prompt)
 
-        if not self.client:
-            # Return mock response if httpx not available
-            return json.dumps(
-                {
-                    "original_prompt": prompt,
-                    "sub_prompts": [
-                        {
-                            "id": 1,
-                            "content": "This is a mock response - httpx not available",
-                            "opaque_values": {},
-                            "suggested_tools": ["file-operations.read_file"],
-                        }
-                    ],
-                }
-            )
-
         try:
-            response = self.client.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": enhanced_prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.1,
-                        "top_p": 0.9,
-                        "num_predict": 2048,
-                    },
-                },
-            )
-            response.raise_for_status()
-
-            result = response.json()
-            raw_response = result.get("response", "")
-
+            raw_response = self.llm_provider.generate_response_sync(enhanced_prompt)
             # Extract JSON from the response
             json_response = self._extract_json_from_response(raw_response)
             return json_response
-
         except Exception as e:
-            # Return mock response on error
+            logger.error(f"Error generating plan (sync): {e}")
+            # Return fallback response
             return json.dumps(
                 {
                     "original_prompt": prompt,
@@ -367,7 +319,7 @@ class MCPIntegratedPlanningLLM:
 
     async def close(self):
         """Close connections."""
-        # No persistent connections to close in this implementation
+        self.llm_provider.close()
         if self.client:
             self.client.close()
 
@@ -378,9 +330,20 @@ class MCPIntegratedPlanningLLM:
         await self.close()
 
 
-# Convenience function to create the integrated planning LLM
+# Convenience functions to create the integrated planning LLM
 def create_mcp_planning_llm(
     model: str = "llama3.2", base_url: str = "http://localhost:11434"
 ) -> MCPIntegratedPlanningLLM:
-    """Create an MCP-integrated planning LLM."""
-    return MCPIntegratedPlanningLLM(model=model, base_url=base_url)
+    """Create an MCP-integrated planning LLM with Ollama provider."""
+    return MCPIntegratedPlanningLLM(
+        provider_type="ollama", model=model, base_url=base_url
+    )
+
+
+def create_mcp_planning_llm_gemini(
+    model: str = "gemini-2.0-flash-exp", api_key: str | None = None
+) -> MCPIntegratedPlanningLLM:
+    """Create an MCP-integrated planning LLM with Gemini provider."""
+    return MCPIntegratedPlanningLLM(
+        provider_type="gemini", model=model, api_key=api_key
+    )

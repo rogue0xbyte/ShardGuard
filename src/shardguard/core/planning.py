@@ -11,12 +11,20 @@ class PlanningLLM:
     """Synchronous wrapper for MCPIntegratedPlanningLLM that implements PlanningLLMProtocol."""
 
     def __init__(
-        self, model: str = "llama3.2", base_url: str = "http://localhost:11434"
+        self,
+        provider_type: str = "ollama",
+        model: str = "llama3.2",
+        base_url: str = "http://localhost:11434",
+        api_key: str | None = None,
     ):
-        self._impl = MCPIntegratedPlanningLLM(model=model, base_url=base_url)
+        self._impl = MCPIntegratedPlanningLLM(
+            provider_type=provider_type, model=model, base_url=base_url, api_key=api_key
+        )
         # Expose attributes for compatibility with tests
+        self.provider_type = provider_type
         self.model = model
         self.base_url = base_url
+        self.api_key = api_key
 
     def generate_plan(self, prompt: str) -> str:
         """Generate a plan using the sync version of the underlying implementation."""
@@ -58,3 +66,20 @@ class PlanningLLM:
     async def close(self):
         """Close any open connections."""
         await self._impl.close()
+
+
+# Convenience functions for creating different types of planning LLMs
+
+
+def create_ollama_planning_llm(
+    model: str = "llama3.2", base_url: str = "http://localhost:11434"
+) -> PlanningLLM:
+    """Create a planning LLM that uses Ollama."""
+    return PlanningLLM(provider_type="ollama", model=model, base_url=base_url)
+
+
+def create_gemini_planning_llm(
+    model: str = "gemini-2.0-flash-exp", api_key: str | None = None
+) -> PlanningLLM:
+    """Create a planning LLM that uses Google Gemini."""
+    return PlanningLLM(provider_type="gemini", model=model, api_key=api_key)

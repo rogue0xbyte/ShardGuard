@@ -83,7 +83,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         headers = arguments.get("headers", {})
         body = arguments.get("body", "")
 
-        result = "🌐 [WEB PoC] Would make HTTP request:\n"
+        result = "[WEB PoC] Would make HTTP request:\n"
         result += f"  URL: {url}\n"
         result += f"  Method: {method}\n"
         if headers:
@@ -97,7 +97,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         url = arguments["url"]
         selector = arguments.get("selector", "")
 
-        result = "🌐 [WEB PoC] Would scrape website:\n"
+        result = "[WEB PoC] Would scrape website:\n"
         result += f"  URL: {url}\n"
         if selector:
             result += f"  Selector: {selector}"
@@ -108,7 +108,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         url = arguments["url"]
         filename = arguments["filename"]
 
-        result = "🌐 [WEB PoC] Would download file:\n"
+        result = "[WEB PoC] Would download file:\n"
         result += f"  URL: {url}\n"
         result += f"  Save as: {filename}"
 

@@ -68,20 +68,20 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Handle tool calls."""
     if name == "read_file":
         path = arguments["path"]
-        result = f"📁 [FILE PoC] Would read file: {path}"
+        result = f"[FILE PoC] Would read file: {path}"
         return [TextContent(type="text", text=result)]
 
     elif name == "write_file":
         path = arguments["path"]
         content = arguments["content"]
-        result = "📁 [FILE PoC] Would write to file:\n"
+        result = "[FILE PoC] Would write to file:\n"
         result += f"  Path: {path}\n"
         result += f"  Content: {content[:100]}{'...' if len(content) > 100 else ''}"
         return [TextContent(type="text", text=result)]
 
     elif name == "list_directory":
         path = arguments["path"]
-        result = f"📁 [FILE PoC] Would list directory: {path}"
+        result = f"[FILE PoC] Would list directory: {path}"
         return [TextContent(type="text", text=result)]
 
     else:
