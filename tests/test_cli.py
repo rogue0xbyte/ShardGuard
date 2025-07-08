@@ -44,7 +44,7 @@ class TestCLICommands:
         assert "--model" in result.output
         assert "--ollama-url" in result.output
 
-    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.core.coordination.CoordinationService")
     @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_success(
         self, mock_get_mcp_planner, mock_coordination_service
@@ -94,7 +94,7 @@ class TestCLICommands:
             ),
         ],
     )
-    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.core.coordination.CoordinationService")
     @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_with_custom_parameters(
         self,
@@ -122,7 +122,7 @@ class TestCLICommands:
         assert result.exit_code == 0
         mock_get_mcp_planner.assert_called_once()
 
-    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.core.coordination.CoordinationService")
     @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_connection_error(
         self, mock_get_mcp_planner, mock_coordination_service
@@ -147,7 +147,7 @@ class TestCLICommands:
         assert result.exit_code == 1
         assert "Connection Error" in result.output
 
-    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.core.coordination.CoordinationService")
     @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_general_error(
         self, mock_get_mcp_planner, mock_coordination_service
@@ -170,7 +170,7 @@ class TestCLICommands:
         assert result.exit_code == 1
         assert "Error:" in result.output
 
-    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.core.coordination.CoordinationService")
     @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_console_output(
         self, mock_get_mcp_planner, mock_coordination_service
@@ -210,7 +210,7 @@ class TestCLICommands:
         assert result.exit_code == 2  # Click error code for missing argument
         assert "Missing argument" in result.output
 
-    @patch("shardguard.core.coordination.AsyncCoordinationService")
+    @patch("shardguard.core.coordination.CoordinationService")
     @patch("shardguard.cli.get_mcp_planner")
     def test_plan_command_json_output_format(
         self, mock_get_mcp_planner, mock_coordination_service

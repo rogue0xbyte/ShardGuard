@@ -90,7 +90,7 @@ def _print_provider_info(provider: str, model: str, ollama_url: str) -> None:
         console.print(f"[dim]Using Gemini model: {model}[/dim]")
 
 
-def _print_tools_info(tools_description: str) -> None:
+def _print_tools_info(tools_description: str, verbose: bool = False) -> None:
     """Print information about available tools."""
     if "No MCP tools available." in tools_description:
         return
@@ -103,9 +103,32 @@ def _print_tools_info(tools_description: str) -> None:
         for line in tools_description.split("\n")
         if line.strip().startswith("Server:")
     ]
-    console.print(
-        f"[dim]Available tools: {len(tool_lines)} tools from {len(server_lines)} MCP servers[/dim]"
-    )
+
+    if verbose:
+        console.print("[bold blue]MCP Servers & Tools:[/bold blue]")
+        _print_verbose_tools_info(tools_description)
+    else:
+        console.print(
+            f"[dim]Available tools: {len(tool_lines)} tools from {len(server_lines)} MCP servers[/dim]"
+        )
+
+
+def _print_verbose_tools_info(tools_description: str) -> None:
+    """Print detailed server and tool information."""
+    lines = tools_description.split("\n")
+    current_server = None
+
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line.startswith("Server:"):
+            current_server = stripped_line.replace("Server:", "").strip()
+            console.print(f"[bold cyan]{current_server}[/bold cyan]")
+        elif stripped_line.startswith("•"):
+            tool_name = stripped_line.replace("•", "").strip()
+            if ":" in tool_name:
+                tool_name = tool_name.split(":")[0]
+            console.print(f"  └── [green]{tool_name}[/green]")
+    console.print()
 
 
 def _handle_errors(e: Exception, provider: str) -> None:
@@ -137,6 +160,9 @@ def list_tools(
     gemini_api_key: str = typer.Option(
         None, "--gemini-api-key", help="Gemini API key (or set GEMINI_API_KEY env var)"
     ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show detailed server and tool information"
+    ),
 ):
     """List all available MCP tools."""
 
@@ -156,8 +182,11 @@ def list_tools(
         )
         try:
             tools_description = await planner.get_available_tools_description()
-            console.print("[bold blue]Available MCP Tools:[/bold blue]")
-            console.print(tools_description)
+            if verbose:
+                _print_verbose_tools_info(tools_description)
+            else:
+                console.print("[bold blue]Available MCP Tools:[/bold blue]")
+                console.print(tools_description)
         finally:
             await planner.close()
 
@@ -180,6 +209,9 @@ def plan(
     ),
     gemini_api_key: str = typer.Option(
         None, "--gemini-api-key", help="Gemini API key (or set GEMINI_API_KEY env var)"
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show detailed server and tool information"
     ),
 ):
     """Generate a safe execution plan for a user prompt."""
@@ -205,12 +237,12 @@ def plan(
 
             # Show available tools
             tools_description = await planner.get_available_tools_description()
-            _print_tools_info(tools_description)
+            _print_tools_info(tools_description, verbose)
 
             # Create async-aware coordination service
-            from shardguard.core.coordination import AsyncCoordinationService
+            from shardguard.core.coordination import CoordinationService
 
-            coord = AsyncCoordinationService(planner)
+            coord = CoordinationService(planner)
             plan_obj = await coord.handle_prompt(prompt)
             typer.echo(plan_obj.model_dump_json(indent=2))
 
@@ -222,12 +254,22 @@ def plan(
 
 # Add a callback to ensure we always have subcommands
 @app.callback(invoke_without_command=True)
-def main(ctx: typer.Context):
+def main(
+    ctx: typer.Context,
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show detailed server and tool information"
+    ),
+):
     if ctx.invoked_subcommand is None:
         # Initialize MCP connections when CLI starts
         async def _init():
             console.print("🛡️  [bold blue]Welcome to ShardGuard![/bold blue]")
-            await get_mcp_planner()
+            planner = await get_mcp_planner()
+
+            if verbose:
+                tools_description = await planner.get_available_tools_description()
+                _print_verbose_tools_info(tools_description)
+
             console.print("\n[dim]Use --help to see available commands.[/dim]")
             console.print("[dim]Available commands: list-tools, plan[/dim]")
             console.print("[dim]Supported providers: ollama (default), gemini[/dim]")
