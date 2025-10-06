@@ -37,6 +37,7 @@ class StepExecutor:
         Function to handle data and schema of each SubPrompt to our desired
         executional step, which is used to send it to the exact tool call 
         for processing.
+        Step - Each subprompt that takes the system a step forward to completing the prompt as a whole.
         """
         calls_spec = step.get("suggested_tools")
 

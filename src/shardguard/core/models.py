@@ -13,4 +13,3 @@ class SubPrompt(BaseModel):
 class Plan(BaseModel):
     original_prompt: str
     sub_prompts: list[SubPrompt]
-

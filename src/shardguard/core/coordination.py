@@ -27,6 +27,13 @@ class CoordinationService:
     def _to_dict(self, obj: Any) -> Dict[str, Any]:
         """
         Normalize SubPrompt into a real dict.
+        When the prompt goes to the LLM, it returns a Pydantic model, 
+        which makes it difficult to process for python, instead to make 
+        it more generalized have added this middleware to make any kind of 
+        data that comes in, return as a dict for simplicity purposes. 
+        So that, even if someone changes the structure of the SubPrompt in 
+        the future and some other datatype comes in, we would not have to 
+        make changes again to this.
         """
         if isinstance(obj, dict):
             return obj
@@ -55,8 +62,10 @@ class CoordinationService:
     def extract_arguments(self, task):
         """
         Extracting arguments from the prompt for both cases:
-            1. Getting both key-value pairs for the system as a whole
+            1. Getting both key-value pairs for the system as a whole 
+            (system args that will be known only to the coordination service)
             2. Getting only the key for the parameter to be obfuscated
+            (args that can be used and referenced by any subprompt cause this is opaque and obfuscated)
         """
         opaque = task.get("opaque_values") or {}
         if not isinstance(opaque, Mapping):
@@ -71,6 +80,8 @@ class CoordinationService:
         Args:
             LLMStepResponse: Processed prompts to breakdown specific tasks so that no other MCP knows about each other
             argument_dicts: The dictionary of arguments whose value would be required by the tool to execute the task
+        This function gets called and run after the execution LLM has finalized the tool and server to be called with 
+        the obfuscated parameters to be sent. 
         """
         mcp = MCPClient()
         # Resolved values will contain the exact value of the argument instead of the Opaque ones
