@@ -1,7 +1,6 @@
 # This file has architecture of how the Plan and SubPrompt would look like.
 
 from pydantic import BaseModel, Field
-from typing import Any, List
 
 
 class SubPrompt(BaseModel):
