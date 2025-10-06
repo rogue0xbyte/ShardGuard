@@ -1,3 +1,10 @@
+"""
+This file handles the whole coordination of the prompt from Planning to
+Execution, it is the middleware for everything. Every step executed goes
+from here and comes back here to be further processed. This is because we 
+trust that the coordination service is the trusted source for ShardGuard.
+"""
+
 from rich.console import Console
 from dataclasses import is_dataclass, asdict
 from typing import Any, Dict, Mapping

@@ -1,5 +1,8 @@
-# shardguard/core/execution.py
-
+"""
+This file handles the breaking down of a task into single or
+multiple MCP tools based on suggested tools in the sub prompt 
+given by the LLM.
+"""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, List, Mapping
@@ -23,16 +26,18 @@ class LLMStepResponse:
 
 class StepExecutor:
     """
-    This gets the 
     - Returns normalized tool calls.
     """
 
     def __init__(self) -> None:
-        pass  # no _deny needed
+        pass
 
     async def run_step(self, step: Any) -> LLMStepResponse:
-
-        # Accept both 'suggested_tools' and legacy 'calls'
+        """
+        Function to handle data and schema of each SubPrompt to our desired
+        executional step, which is used to send it to the exact tool call 
+        for processing.
+        """
         calls_spec = step.get("suggested_tools")
 
         # Normalize to a list; accept single object or "server.tool" string
