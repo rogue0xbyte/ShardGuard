@@ -7,13 +7,14 @@ trust that the coordination service is the trusted source for ShardGuard.
 
 from rich.console import Console
 from dataclasses import is_dataclass, asdict
-from typing import Any, Dict, Mapping
+from typing import Any, Dict, Mapping, Optional
 
 from shardguard.core.models import Plan
 from shardguard.core.planning import PlanningLLM
 from shardguard.core.prompts import PLANNING_PROMPT
-from shardguard.core.execution import StepExecutor
+from shardguard.core.execution import StepExecutor, LLMStepResponse, make_execution_llm
 from shardguard.core.mcp_integration import MCPClient
+from shardguard.utils.validator import _validate_output
 
 class CoordinationService:
     """Coordination service for planning."""
@@ -51,6 +52,7 @@ class CoordinationService:
         raise TypeError(f"Unsupported step type: {type(obj)!r}. Provide a dict-like object.")
 
     async def handle_prompt(self, user_input: str) -> Plan:
+        """Prepare the prompt by adding predefined context to design the plan of execution"""
         formatted_prompt = self._format_prompt(user_input)
         plan_json = await self.planner.generate_plan(formatted_prompt)
         return Plan.model_validate_json(plan_json)
@@ -59,56 +61,50 @@ class CoordinationService:
         """Format the user input using the planning prompt template."""
         return PLANNING_PROMPT.format(user_prompt=user_input)
     
-    def extract_arguments(self, task):
-        """
-        Extracting arguments from the prompt for both cases:
-            1. Getting both key-value pairs for the system as a whole 
-            (system args that will be known only to the coordination service)
-            2. Getting only the key for the parameter to be obfuscated
-            (args that can be used and referenced by any subprompt cause this is opaque and obfuscated)
-        """
-        opaque = task.get("opaque_values") or {}
-        if not isinstance(opaque, Mapping):
-            return []
-        for k, v in opaque.items():
-            self.args[k] = v
-        return list(opaque.keys())
+    # def extract_arguments(self, task):
+    #     """
+    #     Extracting arguments from the prompt for both cases:
+    #         1. Getting both key-value pairs for the system as a whole 
+    #         (system args that will be known only to the coordination service)
+    #         2. Getting only the key for the parameter to be obfuscated
+    #         (args that can be used and referenced by any subprompt cause this is opaque and obfuscated)
+    #     """
+    #     opaque = task.get("opaque_values") or {}
+    #     if not isinstance(opaque, Mapping):
+    #         return []
+    #     for k, v in opaque.items():
+    #         self.args[k] = v
+    #     return list(opaque.keys())
 
-    async def execute_tools(self, LLMStepResponse, argument_dicts):
+    async def _execute_step_tools(self, step: Dict[str, Any], resp: LLMStepResponse):
         """
-        Function to make calls to specific tools specified by the Planning LLM
-        Args:
-            LLMStepResponse: Processed prompts to breakdown specific tasks so that no other MCP knows about each other
-            argument_dicts: The dictionary of arguments whose value would be required by the tool to execute the task
-        This function gets called and run after the execution LLM has finalized the tool and server to be called with 
-        the obfuscated parameters to be sent. 
+        After the Execution LLM processes the subprompt, it prepares the tool call
+        and this tool call schema is also validated to make the responses from the LLM
+        as deterministic as possible.
         """
         mcp = MCPClient()
-        # Resolved values will contain the exact value of the argument instead of the Opaque ones
-        resolved_values = {}
-        if argument_dicts:
-            for arg_dict in argument_dicts:
-                if arg_dict in self.args:
-                    resolved_values[arg_dict] = self.args[arg_dict]
-                    break
+        output_schema: Optional[Dict[str, Any]] = step.get("output_schema")
 
-        for calls in LLMStepResponse.tool_calls:
-            await MCPClient.call_tool(
-                mcp,
-                calls.server,
-                calls.tool,
-                resolved_values
-            )
-        print(f"Executed {calls.server}: {calls.tool} with {argument_dicts}")
-        return
+        for call in resp.tool_calls:
+            # Build per-call args
+            per_tool_args: Dict[str, Any] = {}
+            if call.args:
+                per_tool_args.update(call.args)
+
+            result = await mcp.call_tool(call.server, call.tool, per_tool_args)
+            # Validating the result from the tool call with the expected schema
+            _validate_output(result, output_schema, where="Tool Call")
     
-    async def handle_subtasks(self, tasks):
+    async def handle_subtasks(self, tasks, provider, detected_model, api_key):
         """Sends the subtasks to ExecutionLLM"""
         for task in tasks:
+            # Instantiating a new ExecutionLLM for each task so that none of them have each others context
+            exec_llm = make_execution_llm(provider, detected_model, api_key=api_key)
+            executor = StepExecutor(exec_llm)
             task = self._to_dict(task)
-            argument_dicts = self.extract_arguments(task)
+            # argument_dicts = self.extract_arguments(task)
             # Sends the task to process for execution
-            LLMStepResponse = await StepExecutor.run_step(self, task)
-            await self.execute_tools(LLMStepResponse, argument_dicts)
+            resp = await executor.run_step(task)
+            await self._execute_step_tools(task, resp)
         return
 

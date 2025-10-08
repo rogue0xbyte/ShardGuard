@@ -116,7 +116,6 @@ class OllamaProvider(LLMProvider):
                         "id": 1,
                         "content": content,
                         "opaque_values": {},
-                        "suggested_tools": ["file-operations.read_file"],
                     }
                 ],
             }
@@ -212,7 +211,6 @@ class GeminiProvider(LLMProvider):
                         "id": 1,
                         "content": content,
                         "opaque_values": {},
-                        "suggested_tools": ["file-operations.read_file"],
                     }
                 ],
             }

@@ -145,7 +145,6 @@ class MCPClient:
 
                 description += "\n"
 
-        description += "When suggesting tools for tasks, include the tool names in your sub-task 'suggested_tools' field."
         return description
 
     def get_available_servers(self) -> dict[str, str]:

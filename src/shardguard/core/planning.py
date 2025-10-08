@@ -5,8 +5,8 @@ import logging
 import re
 from typing import Protocol
 
-from .llm_providers import LLMProviderFactory
-from .mcp_integration import MCPClient
+from shardguard.core.llm_providers import LLMProviderFactory
+from shardguard.core.mcp_integration import MCPClient
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,6 @@ class PlanningLLM:
                         "id": 1,
                         "content": f"Error occurred: {error}",
                         "opaque_values": {},
-                        "suggested_tools": [],
                     }
                 ],
             }
