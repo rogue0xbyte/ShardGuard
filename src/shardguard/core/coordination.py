@@ -50,17 +50,22 @@ class CoordinationService:
         if hasattr(obj, "__dict__"):
             return dict(vars(obj))
         raise TypeError(f"Unsupported step type: {type(obj)!r}. Provide a dict-like object.")
+    
+    async def check_tool(self, plan_json) -> bool:
+        """Check whether the Planning LLM gave the tools only from those present and not hallucinate"""
 
     async def handle_prompt(self, user_input: str) -> Plan:
         """Prepare the prompt by adding predefined context to design the plan of execution"""
         formatted_prompt = self._format_prompt(user_input)
         plan_json = await self.planner.generate_plan(formatted_prompt)
+        tool_check = await self.check_tool(plan_json)
         return Plan.model_validate_json(plan_json)
 
     def _format_prompt(self, user_input: str) -> str:
         """Format the user input using the planning prompt template."""
         return PLANNING_PROMPT.format(user_prompt=user_input)
     
+    # Have kept the following function commented cause it maybe used in future
     # def extract_arguments(self, task):
     #     """
     #     Extracting arguments from the prompt for both cases:

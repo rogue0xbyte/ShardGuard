@@ -12,7 +12,7 @@ from jsonschema import validate as jsonschema_validate
 from abc import ABC, abstractmethod
 
 from shardguard.core.schemas import TOOL_INTENTS_SCHEMA
-from shardguard.core.llm_providers import LLMProviderFactory
+from shardguard.core.llm_providers import create_provider
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class GenericExecutionLLM(ExecutionLLM):
         elif provider_type.lower() == "gemini":
             provider_kwargs["api_key"] = api_key
 
-        self.llm_provider = LLMProviderFactory.create_provider(
+        self.llm_provider = create_provider(
             provider_type=provider_type,
             model=model,
             **provider_kwargs,

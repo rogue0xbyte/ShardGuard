@@ -3,19 +3,11 @@
 import json
 import logging
 import re
-from typing import Protocol
 
-from shardguard.core.llm_providers import LLMProviderFactory
+from shardguard.core.llm_providers import create_provider
 from shardguard.core.mcp_integration import MCPClient
 
 logger = logging.getLogger(__name__)
-
-
-class PlanningLLMProtocol(Protocol):
-    """Protocol for planning LLM implementations."""
-
-    async def generate_plan(self, prompt: str) -> str: ...
-
 
 class PlanningLLM:
     """Planning LLM with MCP integration and multiple provider support."""
@@ -41,7 +33,7 @@ class PlanningLLM:
         elif provider_type.lower() == "gemini":
             provider_kwargs["api_key"] = api_key
 
-        self.llm_provider = LLMProviderFactory.create_provider(
+        self.llm_provider = create_provider(
             provider_type=provider_type, model=model, **provider_kwargs
         )
 

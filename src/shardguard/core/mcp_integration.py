@@ -145,6 +145,7 @@ class MCPClient:
 
                 description += "\n"
 
+        print(description)
         return description
 
     def get_available_servers(self) -> dict[str, str]:

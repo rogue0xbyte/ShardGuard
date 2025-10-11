@@ -7,7 +7,7 @@ import pytest
 
 from shardguard.core.llm_providers import (
     GeminiProvider,
-    LLMProviderFactory,
+    create_provider,
     OllamaProvider,
 )
 
@@ -108,7 +108,7 @@ class TestLLMProviderFactory:
 
     def test_create_ollama_provider(self):
         """Test creating an Ollama provider."""
-        provider = LLMProviderFactory.create_provider(
+        provider = create_provider(
             "ollama", "llama3.2", base_url="http://example.com"
         )
 
@@ -118,7 +118,7 @@ class TestLLMProviderFactory:
 
     def test_create_gemini_provider(self):
         """Test creating a Gemini provider."""
-        provider = LLMProviderFactory.create_provider(
+        provider = create_provider(
             "gemini", "gemini-2.0-flash-exp", api_key="test-key"
         )
 
@@ -129,12 +129,12 @@ class TestLLMProviderFactory:
     def test_create_unsupported_provider(self):
         """Test creating an unsupported provider raises error."""
         with pytest.raises(ValueError, match="Unsupported provider type"):
-            LLMProviderFactory.create_provider("unsupported", "model")
+            create_provider("unsupported", "model")
 
     def test_case_insensitive_provider_type(self):
         """Test that provider type is case insensitive."""
-        provider1 = LLMProviderFactory.create_provider("OLLAMA", "llama3.2")
-        provider2 = LLMProviderFactory.create_provider("Gemini", "gemini-2.0-flash-exp")
+        provider1 = create_provider("OLLAMA", "llama3.2")
+        provider2 = create_provider("Gemini", "gemini-2.0-flash-exp")
 
         assert isinstance(provider1, OllamaProvider)
         assert isinstance(provider2, GeminiProvider)
