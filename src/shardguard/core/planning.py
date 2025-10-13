@@ -89,6 +89,7 @@ class PlanningLLM:
                         "id": 1,
                         "content": f"Error occurred: {error}",
                         "opaque_values": {},
+                        "suggested_tools": [],
                     }
                 ],
             }

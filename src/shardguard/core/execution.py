@@ -42,7 +42,7 @@ class ExecutionLLM(ABC):
 
 EXEC_SYSTEM_PROMPT = (
     "You are the Execution LLM inside ShardGuard.\n"
-    "Output ONLY a JSON array of tool intents. No text, no code fences.\n"
+    "Output ONLY a JSON array of tool intents. No text, no code fences. Use the suggested tools as reference as those exist in the system.\n"
     'Each item: {"server": "...", "tool": "...", "args": { ...optional... }}\n'
     "Do not include secrets, credentials, or opaque tokens."
 )
@@ -127,6 +127,7 @@ class GenericExecutionLLM(ExecutionLLM):
         try:
             raw_response = await self.llm_provider.generate_response(prompt)
             text = raw_response if isinstance(raw_response, str) else json.dumps(raw_response)
+            print(text)
             return _extract_json_array(text)
 
         except Exception as e:
@@ -153,7 +154,7 @@ class StepExecutor:
             nonsecret_context=nonsecret_ctx,
         )
 
-        logger.debug(f"Proposed tool intents: {json.dumps(intents, indent=2)}")
+        logger.info(f"Proposed tool intents: {json.dumps(intents, indent=2)}")
 
         for it in intents:
             calls.append(

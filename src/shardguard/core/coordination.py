@@ -51,15 +51,33 @@ class CoordinationService:
             return dict(vars(obj))
         raise TypeError(f"Unsupported step type: {type(obj)!r}. Provide a dict-like object.")
     
-    async def check_tool(self, plan_json) -> bool:
-        """Check whether the Planning LLM gave the tools only from those present and not hallucinate"""
+    async def check_tool(self, suggested_tools) -> bool:
+        """Check whether the Planning LLM gave the tools only from those present with us and not hallucinate"""
+        mcp = MCPClient()
+        tools = await mcp.list_tool_names()
+        for tool in suggested_tools:
+            if tool in tools:
+                return True
+        return False
 
     async def handle_prompt(self, user_input: str) -> Plan:
         """Prepare the prompt by adding predefined context to design the plan of execution"""
         formatted_prompt = self._format_prompt(user_input)
         plan_json = await self.planner.generate_plan(formatted_prompt)
-        tool_check = await self.check_tool(plan_json)
-        return Plan.model_validate_json(plan_json)
+        
+        # Set the plan to a valid json for processing
+        plan_tool_check = Plan.model_validate_json(plan_json).model_dump(exclude_none=True)
+        # Looping into subprompts to get suggested tools, and check the tool exists in the system before execution starts
+        tool_check = [] # this is an array as we want all the Sub Prompts to have the tools only existing in the system
+        for items in plan_tool_check["sub_prompts"]:
+            tool_check.append(await self.check_tool(items["suggested_tools"]))
+        
+        # Validating if all are True in the array, else PlanningLLM is retried
+        if(not(False in tool_check)):
+            return Plan.model_validate_json(plan_json)
+        else:
+            print("Retrying PlanningLLM, tool suggestions invalid!")
+            await self.handle_prompt(user_input)
 
     def _format_prompt(self, user_input: str) -> str:
         """Format the user input using the planning prompt template."""
@@ -95,10 +113,12 @@ class CoordinationService:
             per_tool_args: Dict[str, Any] = {}
             if call.args:
                 per_tool_args.update(call.args)
-
+            print("server", call.server)
+            print("tool", call.tool)
             result = await mcp.call_tool(call.server, call.tool, per_tool_args)
             # Validating the result from the tool call with the expected schema
             _validate_output(result, output_schema, where="Tool Call")
+            print()
     
     async def handle_subtasks(self, tasks, provider, detected_model, api_key):
         """Sends the subtasks to ExecutionLLM"""
@@ -107,8 +127,9 @@ class CoordinationService:
             exec_llm = make_execution_llm(provider, detected_model, api_key=api_key)
             executor = StepExecutor(exec_llm)
             task = self._to_dict(task)
-            # argument_dicts = self.extract_arguments(task)
+            # argument_dicts = self.extract_arguments(task) -- kept this for future use, can be discarded later if not needed after discussion
             # Sends the task to process for execution
+            print(task)
             resp = await executor.run_step(task)
             await self._execute_step_tools(task, resp)
         return

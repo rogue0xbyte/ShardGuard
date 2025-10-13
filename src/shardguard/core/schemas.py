@@ -69,7 +69,7 @@ PLANNING_LLM_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["id", "content"],
+                "required": ["id", "content", "suggested_tools"],
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -88,6 +88,16 @@ PLANNING_LLM_SCHEMA = {
                         },
                         "additionalProperties": {},
                         "description": "Optional mapping of placeholder tokens to corresponding sensitive data"
+                    }, 
+                    "suggested_tools": {
+                        "type": "array",
+                        "items":{
+                            "type":"string",
+                            "minLength": 1,
+                            "description": "Each tool with server name in the following format server_name.tool_name"
+                        },
+                        "minLength": 1,
+                        "description": "List of suggested tools for the subprompt to be executed"
                     }
                 },
                 "additionalProperties": {}

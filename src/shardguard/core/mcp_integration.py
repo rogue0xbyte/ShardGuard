@@ -144,12 +144,11 @@ class MCPClient:
                                 )
 
                 description += "\n"
-
-        print(description)
+        
+        description += "When suggesting tools for tasks, include the tool names in your sub-task 'suggested_tools' field."
         return description
-
-    def get_available_servers(self) -> dict[str, str]:
-        """Get list of available servers and their descriptions."""
-        return {
-            name: config["description"] for name, config in self.server_configs.items()
-        }
+    
+    async def list_tool_names(self):
+        tools_by_server = await self.list_tools()
+        tool_names = [f"{server}.{tool.name}" for server, tools in tools_by_server.items() for tool in tools]
+        return tool_names
