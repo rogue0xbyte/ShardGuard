@@ -36,25 +36,62 @@ class ExecutionLLM(ABC):
         self,
         *,
         step_content: str,
-        nonsecret_context: Optional[Dict[str, Any]] = None
+        suggested_tools
     ) -> List[Dict[str, Any]]:
         """Propose validated tool intents based on the step content."""
 
-EXEC_SYSTEM_PROMPT = (
-    "You are the Execution LLM inside ShardGuard.\n"
-    "Output ONLY a JSON array of tool intents. No text, no code fences. Use the suggested tools as reference as those exist in the system.\n"
-    'Each item: {"server": "...", "tool": "...", "args": { ...optional... }}\n'
-    "Do not include secrets, credentials, or opaque tokens."
-)
+EXEC_SYSTEM_PROMPT = '''
+You are the Execution LLM for ShardGuard.
 
-def _build_exec_prompt(task: str, ctx: Optional[Dict[str, Any]]) -> str:
+Return a JSON array of tool intents or [].
+
+RULES (hard constraints):
+- Use **ONLY tools** listed in "suggested_tools". Zero exceptions.
+- **Do NOT** invent tools, servers, steps, or intermediate IDs.
+- All outputs must be pure JSON. No prose. No code fences.
+
+SCHEMA:
+[
+  {"server": "<must end with '-server' and should be the exact server name as that in suggested_tools>",
+   "tool": "<exact tool name from suggested_tools>",
+   "args": { ...object... }}
+]
+
+VALIDATION YOU MUST SELF-CHECK BEFORE RETURNING:
+1) Every "server.tool" pair appears verbatim in "suggested_tools".
+2) "args" is a JSON object ({} allowed).
+3) The array is valid JSON.
+
+### VERIFY
+Before finalizing:
+1. Ensure every "server" name ends with the word "server" and matches the one by suggested list.
+2. Ensure every "tool" name matches exactly one from the suggested list.
+3. Ensure "args" is a valid JSON object (empty if unused).
+4. Ensure the entire output is a syntactically valid JSON array.
+5. Ensure the output contains no tokens, secrets, or credentials.
+
+If any verification step fails, correct internally and regenerate until all checks pass.
+
+---
+
+### OUTPUT FORMAT EXAMPLE
+[
+  {
+    "server": "email-server",
+    "tool": "send_email",
+    "args": { "to": "user@example.com" }
+  }
+]
+
+'''
+
+def _build_exec_prompt(task: str, suggested_tools: list) -> str:
     """Builds a consistent JSON-based prompt for all execution providers."""
-    print(ctx)
-    ctx_json = json.dumps(ctx or {}, ensure_ascii=False)
+
     return (
         f"{EXEC_SYSTEM_PROMPT}\n\n"
         f"Task:\n{task or ''}\n\n"
-        f"Context (JSON):\n{ctx_json}\n\n"
+        f"Suggested Tools: {suggested_tools or []}"
         "Return ONLY a JSON array (no prose)."
     )
 
@@ -65,9 +102,9 @@ def _extract_json_array(text: str) -> List[Dict[str, Any]]:
     """
     if not isinstance(text, str):
         raise ValueError("Execution LLM returned non-string content.")
-
+    
     try:
-        obj = json.loads(text)
+        obj = json.loads(text.replace("```json","").replace("```",""))     # Added a condition to replace the ```json ``` format to normal json for parsing purposes
         if isinstance(obj, list):
             jsonschema_validate(obj, TOOL_INTENTS_SCHEMA)
             return obj
@@ -119,15 +156,14 @@ class GenericExecutionLLM(ExecutionLLM):
         self,
         *,
         step_content: str,
-        nonsecret_context: Optional[Dict[str, Any]] = None
+        suggested_tools: list
     ) -> List[Dict[str, Any]]:
         """Generate tool intents using the configured LLM provider."""
-        prompt = _build_exec_prompt(step_content, nonsecret_context)
+        prompt = _build_exec_prompt(step_content, suggested_tools)
 
         try:
             raw_response = await self.llm_provider.generate_response(prompt)
             text = raw_response if isinstance(raw_response, str) else json.dumps(raw_response)
-            print(text)
             return _extract_json_array(text)
 
         except Exception as e:
@@ -148,13 +184,11 @@ class StepExecutor:
         """Run a single step through the LLM to get validated tool calls."""
         calls: List[ToolCall] = []
 
-        nonsecret_ctx = step.get("nonsecret_context") or {}
+        # Gets the intents that the Execution LLM generates from the prompts
         intents = await self.exec_llm.propose_tool_intents(
             step_content=step.get("content", ""),
-            nonsecret_context=nonsecret_ctx,
+            suggested_tools=step.get("suggested_tools", [])
         )
-
-        logger.info(f"Proposed tool intents: {json.dumps(intents, indent=2)}")
 
         for it in intents:
             calls.append(

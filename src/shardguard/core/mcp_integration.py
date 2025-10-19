@@ -21,26 +21,27 @@ class MCPClient:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         servers_dir = os.path.join(os.path.dirname(current_dir), "mcp_servers")
 
+        # Changed the naming to make it easier for the LLM to understand as LLM got confused and started hallucinating
         self.server_configs = {
-            "file-operations": {
+            "file-server": {
                 "command": sys.executable,
                 "args": [os.path.join(servers_dir, "file_server.py")],
-                "description": "File operations with security controls",
+                "description": "File server with security controls",
             },
-            "email-operations": {
+            "email-server": {
                 "command": sys.executable,
                 "args": [os.path.join(servers_dir, "email_server.py")],
-                "description": "Email operations with privacy controls",
+                "description": "Email server with privacy controls",
             },
-            "database-operations": {
+            "database-server": {
                 "command": sys.executable,
                 "args": [os.path.join(servers_dir, "database_server.py")],
-                "description": "Database operations with security controls",
+                "description": "Database server with security controls",
             },
-            "web-operations": {
+            "web-server": {
                 "command": sys.executable,
                 "args": [os.path.join(servers_dir, "web_server.py")],
-                "description": "Web operations with security controls",
+                "description": "Web server with security controls",
             },
         }
 

@@ -7,7 +7,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 # Create the MCP server instance
-server = Server("web-operations")
+server = Server("web-server")
 
 
 @server.list_tools()
