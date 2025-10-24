@@ -16,6 +16,10 @@ from shardguard.core.execution import StepExecutor, LLMStepResponse, make_execut
 from shardguard.core.mcp_integration import MCPClient
 from shardguard.utils.validator import _validate_output
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class CoordinationService:
     """Coordination service for planning."""
 
@@ -69,7 +73,6 @@ class CoordinationService:
         """Prepare the prompt by adding predefined context to design the plan of execution"""
         formatted_prompt = self._format_prompt(user_input)
         plan_json = await self.planner.generate_plan(formatted_prompt)
-
         # Set the plan to a valid json for processing
         plan_tool_check = Plan.model_validate_json(plan_json).model_dump(exclude_none=True)
         # Looping into subprompts to get suggested tools, and check the tool exists in the system before execution starts
@@ -84,10 +87,11 @@ class CoordinationService:
             # Keeping the retry count to a maximum of 5
             if(self.retryCount<=5):
                 self.retryCount+=1
-                print("Retrying PlanningLLM, tool suggestions invalid!")
+                logger.warning(f"Retrying Planning LLM due to invalid tool suggestion!")
                 await self.handle_prompt(user_input)
             else:
-                print("Planning LLM failed to generate plan with tools for all subprompts! OR\nTools for a specific task does not exist!")
+                logger.error("Planning LLM failed to generate plan with tools for all subprompts!\n\n\t\tOR\n\nTools for a specific task does not exist!")
+        return
 
     def _format_prompt(self, user_input: str) -> str:
         """Format the user input using the planning prompt template."""
@@ -127,7 +131,7 @@ class CoordinationService:
             # Validating the result from the tool call with the expected schema
             _validate_output(result, output_schema, where="Tool Call")
 
-            print(f"{call.server}: {call.tool} was called with the parameters: {per_tool_args}")
+            logger.warning(f"{call.server}: {call.tool} was called with the parameters: {per_tool_args}")
     
     async def handle_subtasks(self, tasks, provider, detected_model, api_key):
         """Sends the subtasks to ExecutionLLM"""
