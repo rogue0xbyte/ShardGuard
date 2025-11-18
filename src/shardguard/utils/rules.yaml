@@ -1,0 +1,57 @@
+# Define all PII redaction rules here
+
+# Each rule has:
+#   name: identifier
+#   pattern: regex pattern (raw string)
+#   kind: category (email, phone, etc.)
+#   flags: optional (IGNORECASE, MULTILINE, VERBOSE, etc.)
+
+rules:
+- name: email
+  kind: email
+  pattern: (?P<email>[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[A-Za-z]{2,})
+  flags: IGNORECASE
+
+- name: phone
+  kind: phone
+  pattern: >
+    (?P<phone>
+      (?:\+?\d{1,3}[\s\-.]?)?
+      (?:\(?\d{2,4}\)?[\s\-.]?)?
+      \d{3,4}[\s\-.]?\d{3,4}
+    )
+  flags: VERBOSE
+
+- name: ssn
+  kind: ssn
+  pattern: (?P<ssn>\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b)
+
+- name: credit_card
+  kind: credit_card
+  pattern: (?P<cc>\b(?:\d{4}[-\s]?){3}\d{4}\b|\b\d{15,16}\b)
+
+- name: ipv4
+  kind: ipv4
+  pattern: (?P<ipv4>\b(?:\d{1,3}\.){3}\d{1,3}\b)
+
+- name: url
+  kind: url
+  pattern: (?P<url>\bhttps?://[^\s<>\"']+|\bwww\.[^\s<>\"']+)
+
+- name: mac
+  kind: mac
+  pattern: (?P<mac>(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2})
+
+- name: uuid
+  kind: uu
+  pattern: >
+  (?P<uuid>\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-
+  9a-fA-F]{3}-[0-9a-fA-F]{12}\b)
+
+- name: date
+  kind: date
+  pattern: (?P<date>\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}/\d{1,2}/\d{2,4}\b)
+
+- name: zip
+  kind: zip
+  pattern: (?P<zip>\b\d{5}(?:-\d{4})?\b)

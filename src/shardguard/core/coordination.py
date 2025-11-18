@@ -12,7 +12,8 @@ from typing import Any, Dict, Mapping, Optional
 from shardguard.core.models import Plan
 from shardguard.core.planning import PlanningLLM
 from shardguard.core.prompts import PLANNING_PROMPT
-from shardguard.core.execution import StepExecutor, LLMStepResponse, make_execution_llm
+from shardguard.core.execution import StepExecutor, LLMStepResponse, make_execution_llm, ToolCall
+from shardguard.core.executionLangchain import *
 from shardguard.core.mcp_integration import MCPClient
 from shardguard.utils.validator import _validate_output
 
@@ -147,3 +148,43 @@ class CoordinationService:
             await self._execute_step_tools(task, resp)
         return
 
+    async def handle_subtasks_langchain(self, tasks, provider, detected_model, api_key):
+        """Sends subtasks to a fully self-contained LangChain agent"""
+        for task in tasks:
+            task_dict = self._to_dict(task)
+            argument_dicts = self.extract_arguments(task_dict)
+            task_dict["opaque_values"] = argument_dicts
+            # Create the execution LLM
+            exec_llm = make_execution_llm(provider, detected_model, api_key=api_key)
+            if len(task_dict["suggested_tools"])<1:
+                executor = StepExecutor(exec_llm)
+                task = self._to_dict(task)
+                argument_dicts = self.extract_arguments(task)
+                task["opaque_values"] = argument_dicts
+                # Sends the task to process for execution
+                resp = await executor.run_step(task)
+                await self._execute_step_tools(task, resp)
+            
+            else:
+                # Create agent (tool wrapper)
+                agent = make_execution_agent(
+                    GenericExecutionLLMWrapper(exec_llm),
+                    suggested_tools=ToolsWrapper(task_dict["suggested_tools"])
+                )
+                # Prepare the task input string
+                task_input = task_dict.get("content", "")
+                if "opaque_values" in task_dict:
+                    task_input += f"\nOpaque Values: {task_dict['opaque_values']}"
+                result = await agent.ainvoke(task_input)
+                # Wrap result in LLMStepResponse
+                resp = []
+                for x in task_dict["suggested_tools"]:
+                    resp.append(
+                            ToolCall(server=x.split('.')[0], tool=x.split('.')[-1], args={"result": result})
+                        )
+                resp = LLMStepResponse(
+                                tool_calls=resp
+                        )
+                # Execute the step tools (already async)
+                await self._execute_step_tools(task_dict, resp)
+        return
