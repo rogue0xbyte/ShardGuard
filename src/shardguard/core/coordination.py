@@ -13,7 +13,7 @@ from shardguard.core.models import Plan
 from shardguard.core.planning import PlanningLLM
 from shardguard.core.prompts import PLANNING_PROMPT
 from shardguard.core.execution import StepExecutor, LLMStepResponse, make_execution_llm, ToolCall
-from shardguard.core.executionLangchain import *
+from shardguard.core.execution_langchain import *
 from shardguard.core.mcp_integration import MCPClient
 from shardguard.utils.validator import _validate_output
 
