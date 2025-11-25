@@ -27,6 +27,7 @@ dependencies = [
 
 [project.scripts]
 shardguard = "shardguard.cli:app"
+sgtest = "shardguard.test_framework:main"
 
 [project.optional-dependencies]
 dev = [
