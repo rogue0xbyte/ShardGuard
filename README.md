@@ -1,6 +1,6 @@
 # ShardGuard
 
-ShardGuard is a proof-of-concept system designed to secure Model-Command Processor (MCP) workflows in the presence
+ShardGuard is a proof-of-concept system designed to secure Model-Context Protocol (MCP) workflows in the presence
 of untrusted LLMs. While LLMs offer powerful automation capabilities across sensitive user contexts—like email,
 calendars, and financial services—they also pose significant risks, including prompt injection, data exfiltration,
 and unauthorized tool usage. ShardGuard tackles this by isolating execution into fine-grained, privacy-preserving
