@@ -16,6 +16,7 @@ from shardguard.core.execution import StepExecutor, LLMStepResponse, make_execut
 from shardguard.core.execution_langchain import *
 from shardguard.core.mcp_integration import MCPClient
 from shardguard.utils.validator import _validate_output
+from shardguard.utils.redaction import Redactor
 
 import logging
 
@@ -30,6 +31,7 @@ class CoordinationService:
         # Saving all the args (opaque values) from the prompt into this dictionary 
         self.args: Dict[str, Any] = {}
         self.retryCount = 1     #Keeping the retrycount of the PlanningLLM to not overburden the system and make it keep on be in an infinite loop
+        self.redactor = Redactor("./src/shardguard/utils/rules.yaml", strategy="pseudonymize")
 
     def _to_dict(self, obj: Any) -> Dict[str, Any]:
         """
@@ -74,6 +76,25 @@ class CoordinationService:
         """Prepare the prompt by adding predefined context to design the plan of execution"""
         formatted_prompt = self._format_prompt(user_input)
         plan_json = await self.planner.generate_plan(formatted_prompt)
+
+        plan_dict = Plan.model_validate_json(plan_json).model_dump(exclude_none=True)
+
+        # redactor
+        for sub in plan_dict.get("sub_prompts", []):
+            opaque = sub.get("opaque_values") or {}
+
+            content = sub.get("content", "")
+            for match_rule in self.redactor.rules:
+                kind = match_rule["kind"]
+                pattern = match_rule["pattern"]
+                for m in pattern.findall(content):
+                    opaque[m] = self.redactor._replace(kind, m)
+
+            sub["opaque_values"] = opaque
+
+        import json
+        plan_json = json.dumps(plan_dict)
+
         # Set the plan to a valid json for processing
         plan_tool_check = Plan.model_validate_json(plan_json).model_dump(exclude_none=True)
         # Looping into subprompts to get suggested tools, and check the tool exists in the system before execution starts
