@@ -5,7 +5,7 @@
     - file-server.write_file
     - email-server.send_email
   sensitivePersonalData:
-    - data: Jack Turner 
+    - data: Jack Turner
       type: name
     - data: jack.turner93@testmail.com
       type: email
