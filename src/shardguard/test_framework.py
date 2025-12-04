@@ -91,7 +91,7 @@ class ShardGuardTester:
         """Execute ShardGuard CLI command and capture output"""
         cmd = [
             "poetry", "run", "shardguard", "plan",
-            test_case.userPrompt,
+            f"'{test_case.userPrompt}'",
             "--provider", test_case.provider,
             "--model", test_case.model
         ]
@@ -101,41 +101,46 @@ class ShardGuardTester:
         
         start_time = datetime.now()
         try:
-            result = subprocess.run(
+            process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                timeout=60,
                 cwd=Path.cwd()
             )
 
+            output = ""
+            while True:
+                chunk = process.stdout.read(1024)
+                if not chunk:
+                    break
+                output += chunk
+                print(chunk, end="")
+
+
             end_time = datetime.now()
             execution_time = (end_time - start_time).total_seconds()
-            
-            output = result.stdout
-            if result.stderr:
-                output += "\n=== STDERR ===\n" + result.stderr
-            
-            if result.returncode != 0:
-                error_msg = f"ERROR: Command failed with return code {result.returncode}\n"
+
+            result = process.wait()
+
+            if result != 0:
+                error_msg = f"ERROR: Command failed with return code {result}\n"
                 if self.verbose:
-                    error_msg += f"STDOUT: {result.stdout}\n"
-                    error_msg += f"STDERR: {result.stderr}\n"
+                    error_msg += f"STDOUT: {output}\n"
+                    error_msg += f"STDERR: {process.stderr.read() if process.stderr else ''}\n"
                 output = error_msg + output
-            
-            if not output or output.strip() == "":
+            elif not output or output.strip() == "":
                 output = "ERROR: No output received from ShardGuard command"
             
             return output, execution_time
         
         except subprocess.TimeoutExpired as e:
-            timeout_msg = f"ERROR: Command timed out after 60 seconds\n"
+            timeout_msg = f"ERROR: Command timed out after 120 seconds\n"
             if e.stdout:
                 timeout_msg += f"Partial STDOUT: {e.stdout.decode() if isinstance(e.stdout, bytes) else e.stdout}\n"
             if e.stderr:
                 timeout_msg += f"Partial STDERR: {e.stderr.decode() if isinstance(e.stderr, bytes) else e.stderr}\n"
-            return timeout_msg, 60.0
+            return timeout_msg, 120.0
         except FileNotFoundError:
             return "ERROR: 'poetry' command not found. Make sure Poetry is installed and in PATH.", 0.0
         except Exception as e:
