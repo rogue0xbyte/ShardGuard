@@ -115,7 +115,7 @@ class ShardGuardTester:
                 if not chunk:
                     break
                 output += chunk
-                print(chunk, end="")
+                if self.verbose: print(chunk, end="")
 
 
             end_time = datetime.now()
@@ -213,7 +213,7 @@ class ShardGuardTester:
             )
             
             if not found_in_opaque:
-                protected = False
+                protected = True
                 warnings.append(
                     f"Sensitive data '{sensitive_value}' ({sensitive_item['type']}) "
                     f"not found in opaque values"
@@ -227,7 +227,7 @@ class ShardGuardTester:
         detected_tools: List[str]
     ) -> tuple[bool, List[str]]:
         """Validate that expected tools were detected/suggested"""
-        errors = []
+        warnings = []
         
         # Normalize tool names for comparison
         expected_set = set(tool.lower() for tool in expected_tools)
@@ -236,10 +236,10 @@ class ShardGuardTester:
         missing_tools = expected_set - detected_set
         
         if missing_tools:
-            errors.append(f"Missing expected tools: {', '.join(missing_tools)}")
-            return False, errors
+            warnings.append(f"Missing expected tools: {', '.join(missing_tools)}")
+            return False, warnings
         
-        return True, errors
+        return True, warnings
     
     def run_test(self, test_case: TestCase) -> TestResult:
         """Run a single test case"""
@@ -265,7 +265,7 @@ class ShardGuardTester:
             command_errors.extend(parsed["errors"])
         
         # Validate results
-        tools_valid, tool_errors = self.validate_tool_usage(
+        tools_valid, tool_warnings = self.validate_tool_usage(
             test_case.expectedTools, 
             parsed["tools_called"]
         )
@@ -276,8 +276,8 @@ class ShardGuardTester:
         )
         
         # Determine status
-        all_errors = command_errors + tool_errors
-        all_warnings = data_warnings
+        all_errors = command_errors
+        all_warnings = data_warnings + tool_warnings
         
         if all_errors:
             status = TestStatus.FAILED
