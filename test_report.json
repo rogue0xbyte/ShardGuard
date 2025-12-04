@@ -1,496 +1,571 @@
 {
-  "timestamp": "2025-12-04T04:31:28.382149",
+  "timestamp": "2025-12-04T05:09:14.426021",
   "total_tests": 20,
-  "passed": 0,
-  "warnings": 0,
-  "failed": 20,
-  "total_execution_time": 0.0,
-  "average_execution_time": 0.0,
+  "passed": 1,
+  "warnings": 15,
+  "failed": 4,
+  "total_execution_time": 1552.75,
+  "average_execution_time": 77.64,
   "results": [
     {
       "test_id": 1,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Query the `employees` database for all Security division members with reviews due this month, including Jack Turner (jack.turner93@testmail.com). Export their names and emails to /tmp/security_reviews.csv and email the CSV file to the HR manager at hr.manager@testsuite.io.",
       "expected_tools": [
-        "database-operations.query_database",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "database-server.query_database",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, file-operations.write_file, email-operations.send_email"
+      "detected_tools": [
+        "email-server.list_emails",
+        "database-server.query_database",
+        "file-server.read_file"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "Turner",
+        "[[P2]]": "jack.turner93@testmail.com",
+        "[[P4]]": "hr.manager@testsuite.io"
+      },
+      "errors": [],
       "warnings": [
         "Sensitive data 'Jack Turner' (name) not found in opaque values",
-        "Sensitive data 'jack.turner93@testmail.com' (email) not found in opaque values",
-        "Sensitive data 'hr.manager@testsuite.io' (email) not found in opaque values"
+        "Missing expected tools: file-server.write_file, email-server.send_email"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 50.09,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Query the `employees` database for all Security division members with reviews due this month, including [[P1]] Turner ([[P2]])@[[P3]]. Export their names and emails to /tmp/security_reviews.csv and email the CSV file to the HR manager at [[P4]].\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Read contents of /tmp/security_reviews.csv using file-server's read_file tool.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"Turner\",\n        \"[[P2]]\": \"jack.turner93@testmail.com\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"List recent emails using email-server's list_emails tool.\",\n      \"opaque_values\": {\n        \"[[P4]]\": \"hr.manager@testsuite.io\"\n      },\n      \"suggested_tools\": [\n        \"email-server.list_emails\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Execute the query `SELECT * FROM employees WHERE department = 'Security' AND review_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 month';` using database-server's query_database tool.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"Turner\",\n        \"[[P2]]\": \"jack.turner93@testmail.com\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {'path': '/tmp/security_reviews.csv'}\nemail-server: list_emails was called with the parameters: {}\ndatabase-server: query_database was called with the parameters: {'sql': \"SELECT * FROM employees WHERE department = 'Security' AND review_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 month'\"}\n"
     },
     {
       "test_id": 2,
       "status": "FAILED",
       "prompt": "From the `patients` table, find all appointments on 2025-03-15 at 09:00 for patient Lucy Zhao (lucy.zhao88@demo.org). Save the result to /secure/patients/lucy_zhao_appointment.csv and email Lucy a reminder with her appointment time \"2025-03-15T09:00\".",
       "expected_tools": [
-        "database-operations.query_database",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "database-server.query_database",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
       "detected_tools": [],
-      "sensitive_data_protected": false,
+      "sensitive_data_protected": true,
       "opaque_values": {},
       "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, file-operations.write_file, email-operations.send_email"
+        "ERROR: Command failed with return code 1"
       ],
       "warnings": [
         "Sensitive data 'Lucy Zhao' (name) not found in opaque values",
         "Sensitive data 'lucy.zhao88@demo.org' (email) not found in opaque values",
-        "Sensitive data '2025-03-15T09:00' (schedule) not found in opaque values"
+        "Sensitive data '2025-03-15T09:00' (schedule) not found in opaque values",
+        "Missing expected tools: database-server.query_database, file-server.write_file, email-server.send_email"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 92.49,
+      "raw_output": "ERROR: Command failed with return code 1\nSTDOUT: \ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n\nSTDERR: \n\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n"
     },
     {
       "test_id": 3,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Read the CSV file /secure/grades/ce203_midterm.csv, identify students scoring below 60, including Maria Gomez (maria.gomez77@schoolmail.edu), write the list of at-risk students to /secure/reports/ce203_at_risk.csv, and email that file to professor Mark Reynolds at mark.reynolds@universitydemo.edu.",
       "expected_tools": [
-        "file-operations.read_file",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "file-server.read_file",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: file-operations.write_file, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.write_file",
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "maria.gomez77@schoolmail.edu",
+        "[[P2]]": "mark.reynolds@universitydemo.edu"
+      },
+      "errors": [],
       "warnings": [
         "Sensitive data 'Maria Gomez' (name) not found in opaque values",
-        "Sensitive data 'maria.gomez77@schoolmail.edu' (email) not found in opaque values",
-        "Sensitive data 'Mark Reynolds' (name) not found in opaque values",
-        "Sensitive data 'mark.reynolds@universitydemo.edu' (email) not found in opaque values"
+        "Sensitive data 'Mark Reynolds' (name) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 57.76,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Read the CSV file /secure/grades/ce203_midterm.csv, identify students scoring below 60, including Maria Gomez [[P1]](maria.gomez77@schoolmail.edu), write the list of at-risk students to /secure/reports/ce203_at_risk.csv, and email that file to professor Mark Reynolds at [[P2]](mark.reynolds@universitydemo.edu).\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Read the CSV file /secure/grades/ce203_midterm.csv using file-server > read_file\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"maria.gomez77@schoolmail.edu\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Identify students scoring below 60 using file-server > read_file and database-server > query_database\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"maria.gomez77@schoolmail.edu\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\",\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Write the list of at-risk students to /secure/reports/ce203_at_risk.csv using file-server > write_file\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"maria.gomez77@schoolmail.edu\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Email the list of at-risk students to professor Mark Reynolds using email-server > send_email\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"mark.reynolds@universitydemo.edu\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {}\nfile-server: read_file was called with the parameters: {}\ndatabase-server: query_database was called with the parameters: {}\nfile-server: write_file was called with the parameters: {'path': '/secure/reports/ce203_at_risk.csv'}\nemail-server: send_email was called with the parameters: {'to': 'at-risk_students@example.com', 'subject': 'Reminder'}\n"
     },
     {
       "test_id": 4,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Backup the `customers` database before the campaign, then query the 50 highest spenders, including David Lee (david.lee2025@clientmail.com) from Austin, and save their first name and city to /tmp/vip_customers.csv. Email each VIP a thank-you message and CC a summary to marketing lead at marketing.lead@demo.io.",
       "expected_tools": [
-        "database-operations.backup_database",
-        "database-operations.query_database",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "database-server.backup_database",
+        "database-server.query_database",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, file-operations.write_file, database-operations.backup_database, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "david.lee2025@clientmail.com",
+        "[[P2]]": "marketing.lead@demo.io"
+      },
+      "errors": [],
       "warnings": [
         "Sensitive data 'David Lee' (name) not found in opaque values",
-        "Sensitive data 'david.lee2025@clientmail.com' (email) not found in opaque values",
         "Sensitive data 'Austin' (address) not found in opaque values",
-        "Sensitive data 'marketing.lead@demo.io' (email) not found in opaque values"
+        "Missing expected tools: database-server.backup_database"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 75.21,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Backup the `customers` database before the campaign, then query the 50 highest spenders, including David Lee [[P1]] from Austin, and save their first name and city to /tmp/vip_customers.csv. Email each VIP a thank-you message and CC a summary to marketing lead at [[P2]]@demo.io.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Backup the `customers` database before the campaign, using file-server's write_file tool\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"david.lee2025@clientmail.com\",\n        \"[[P2]]\": \"marketing.lead@demo.io\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Query the 50 highest spenders from the customers database, using database-server's query_database tool\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"david.lee2025@clientmail.com\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Save the first name and city of the 50 highest spenders to /tmp/vip_customers.csv, using file-server's write_file tool\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"david.lee2025@clientmail.com\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Email each VIP a thank-you message, using email-server's send_email tool\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"david.lee2025@clientmail.com\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    },\n    {\n      \"id\": 5,\n      \"content\": \"CC a summary to marketing lead at [[P2]]@demo.io, using email-server's send_email tool\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"marketing.lead@demo.io\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: write_file was called with the parameters: {'path': '/backup/customers.db'}\ndatabase-server: query_database was called with the parameters: {'limit': 50, 'column': 'total_spend'}\nfile-server: write_file was called with the parameters: {'filename': '/tmp/vip_customers.csv', 'field1': 'first_name', 'field2': 'city'}\nfile-server: write_file was called with the parameters: {'filename': '/tmp/vip_customers.csv', 'field1': 'first_name', 'field2': 'city'}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com'}\nemail-server: send_email was called with the parameters: {'to': 'another_user@example.com'}\nemail-server: send_email was called with the parameters: {'to': 'P2@demo.io'}\n"
     },
     {
       "test_id": 5,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Scrape the conference schedule from https://conf-demo.org/schedule, find the talk for speaker Emma Kline (emma.kline@demo.edu), save the HTML to /tmp/emma_kline_talk.html, and email Emma with her session time and room, addressing her as \"Dr. Emma Kline\" in the email.",
       "expected_tools": [
-        "web-operations.scrape_website",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "web-server.scrape_website",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: web-operations.scrape_website, file-operations.write_file, email-operations.send_email"
+      "detected_tools": [
+        "email-server.send_email",
+        "file-server.write_file",
+        "web-server.scrape_website",
+        "talk-server.find_talk"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "emma.kline@demo.edu",
+        "https://conf-demo.org/schedule": "<URL:552f06d3a60e>",
+        "[[P2]]": "emma.kline@demo.edu"
+      },
+      "errors": [],
       "warnings": [
         "Sensitive data 'Emma Kline' (name) not found in opaque values",
-        "Sensitive data 'emma.kline@demo.edu' (email) not found in opaque values",
         "Sensitive data 'Dr. Emma Kline' (name) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 56.57,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Scrape the conference schedule from https://conf-demo.org/schedule, find the talk for speaker [[P1]] (emma.kline@demo.edu), save the HTML to /tmp/emma_kline_talk.html, and email [[P2]] with her session time and room, addressing her as \\\"Dr. Emma Kline\\\" in the email.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Scrape conference schedule from https://conf-demo.org/schedule\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"emma.kline@demo.edu\",\n        \"https://conf-demo.org/schedule\": \"<URL:552f06d3a60e>\"\n      },\n      \"suggested_tools\": [\n        \"web-server.scrape_website\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Find talk for speaker [[P1]]\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"emma.kline@demo.edu\"\n      },\n      \"suggested_tools\": []\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Save HTML to /tmp/emma_kline_talk.html\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"emma.kline@demo.edu\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Email [[P2]] with session time and room\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"emma.kline@demo.edu\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nweb-server: scrape_website was called with the parameters: {}\ntalk-server: find_talk was called with the parameters: {'speaker_id': '[[P1]]'}\nfile-server: write_file was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com', 'subject': 'Session time and room', 'body': 'Your session is scheduled for {{time}} in room {{room}}'}\n"
     },
     {
       "test_id": 6,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Send an HTTP GET request to https://api.companydemo.internal/payroll/upcoming, save the JSON response to /secure/payroll/upcoming_2025-01-12.json, and email payroll.lead@companydemo.io a summary of employees scheduled for payment on \"2025-01-12\", highlighting employee ID 774203 and account ending in 4421.",
       "expected_tools": [
-        "web-operations.http_request",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "web-server.http_request",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: file-operations.write_file, web-operations.http_request, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "email-server.find_email",
+        "email-server.list_emails",
+        "file-server.write_file",
+        "file-server.read_file"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "https://api.companydemo.internal/payroll/upcoming",
+        "[[P2]]": "{\"employees\": [...], \"summary\": [...]}",
+        "[[P3]]": "payroll.lead@companydemo.io",
+        "payroll.lead@companydemo.io": "<EMAIL:2f9e0f5933c6>",
+        "[[P4]]": "{\"employee_id\": 774203, \"account_number\": 4421}",
+        "2025-01-12": "<DATE:345ad6ed3248>"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'payroll.lead@companydemo.io' (email) not found in opaque values",
         "Sensitive data '2025-01-12' (schedule) not found in opaque values",
-        "Sensitive data '774203' (employee_id) not found in opaque values",
-        "Sensitive data '4421' (financial) not found in opaque values"
+        "Missing expected tools: web-server.http_request, email-server.send_email"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 60.53,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Send an HTTP GET request to https://api.companydemo.internal/payroll/upcoming, save the JSON response to /secure/payroll/upcoming_2025-01-12.json, and email payroll.lead@companydemo.io a summary of employees scheduled for payment on \\\"2025-01-12\\\", highlighting employee ID 774203 and account ending in 4421.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Read contents from file /secure/payroll/upcoming_2025-01-12.json\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"https://api.companydemo.internal/payroll/upcoming\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Write content to file /secure/payroll/upcoming_2025-01-12.json\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"{\\\"employees\\\": [...], \\\"summary\\\": [...]}\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"List recent emails and find email payroll.lead@companydemo.io\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"payroll.lead@companydemo.io\",\n        \"payroll.lead@companydemo.io\": \"<EMAIL:2f9e0f5933c6>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.list_emails\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Query database to find employees scheduled for payment on \\\"2025-01-12\\\"\",\n      \"opaque_values\": {\n        \"[[P4]]\": \"{\\\"employee_id\\\": 774203, \\\"account_number\\\": 4421}\",\n        \"2025-01-12\": \"<DATE:345ad6ed3248>\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {}\nfile-server: write_file was called with the parameters: {}\nemail-server: list_emails was called with the parameters: {'query': 'recent'}\nTool 'find_email' not listed, no validation will be performed\nemail-server: find_email was called with the parameters: {'address': 'payroll.lead@companydemo.io'}\ndatabase-server: query_database was called with the parameters: {'date': '2025-01-12'}\n"
     },
     {
       "test_id": 7,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Download subscribers from https://marketing.demo/export/subscribers.csv to /tmp/subscribers.csv, import them into the `subscribers` table, and send a welcome email to each new subscriber, including Hannah Patel (hannah.patel99@samplemail.org) in the first batch.",
       "expected_tools": [
-        "web-operations.download_file",
-        "file-operations.read_file",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "web-server.download_file",
+        "file-server.read_file",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, web-operations.download_file, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "https://marketing.demo/export/subscribers.csv",
+        "https://marketing.demo/export/subscribers.csv": "<URL:5edc9ded5bd3>",
+        "[[P2]]": "/tmp/subscribers.csv",
+        "[[P3]]": "hannah.patel99@samplemail.org",
+        "hannah.patel99@samplemail.org": "<EMAIL:1f61f486a496>"
+      },
+      "errors": [],
       "warnings": [
         "Sensitive data 'Hannah Patel' (name) not found in opaque values",
-        "Sensitive data 'hannah.patel99@samplemail.org' (email) not found in opaque values"
+        "Missing expected tools: web-server.download_file"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 52.54,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Download subscribers from https://marketing.demo/export/subscribers.csv to /tmp/subscribers.csv, import them into the `subscribers` table, and send a welcome email to each new subscriber, including Hannah Patel (hannah.patel99@samplemail.org) in the first batch.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Download subscribers from https://marketing.demo/export/subscribers.csv to /tmp/subscribers.csv\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"https://marketing.demo/export/subscribers.csv\",\n        \"https://marketing.demo/export/subscribers.csv\": \"<URL:5edc9ded5bd3>\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"import them into the `subscribers` table\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"/tmp/subscribers.csv\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"send a welcome email to each new subscriber, including Hannah Patel (hannah.patel99@samplemail.org) in the first batch\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"hannah.patel99@samplemail.org\",\n        \"hannah.patel99@samplemail.org\": \"<EMAIL:1f61f486a496>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {'path': '/tmp/subscribers.csv'}\ndatabase-server: query_database was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'hannah.patel99@samplemail.org'}\nemail-server: send_email was called with the parameters: {'to': 'hannah.patel99@samplemail.org'}\n"
     },
     {
       "test_id": 8,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Read the onboarding checklist from /policies/hr/onboarding.txt and email it to new hire Michael Torres (michael.torres@demo-company.io), mentioning his start date \"2025-04-01\" and job title \"Data Analyst II\" in the email body.",
       "expected_tools": [
-        "file-operations.read_file",
-        "email-operations.send_email"
+        "file-server.read_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "michael.torres@demo-company.io",
+        "[[P2]]": "2025-04-01",
+        "[[P3]]": "Data Analyst II"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'Michael Torres' (name) not found in opaque values",
-        "Sensitive data 'michael.torres@demo-company.io' (email) not found in opaque values",
-        "Sensitive data '2025-04-01' (schedule) not found in opaque values",
-        "Sensitive data 'Data Analyst II' (employment) not found in opaque values"
+        "Sensitive data 'Michael Torres' (name) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 50.65,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Read the onboarding checklist from /policies/hr/onboarding.txt and email it to new hire Michael Torres [[P1]], mentioning his start date \\\"2025-04-01\\\" and job title \\\"Data Analyst II\\\" in the email body.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Read contents of /policies/hr/onboarding.txt\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"michael.torres@demo-company.io\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Create email with subject and body\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"michael.torres@demo-company.io\",\n        \"[[P2]]\": \"2025-04-01\",\n        \"[[P3]]\": \"Data Analyst II\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Send email with attachments (if needed)\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"michael.torres@demo-company.io\",\n        \"[[P2]]\": \"2025-04-01\",\n        \"[[P3]]\": \"Data Analyst II\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'subject': 'Test Email', 'body': 'Hello, World!'}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com'}\n"
     },
     {
       "test_id": 9,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "List all files in /backups/db/ to confirm that a backup exists for the `customer_prod` database from \"2025-01-20T02:14:00\". If there is no backup for that timestamp, create a new backup named customer_prod_2025_01_20 and email ops@sysalert.io about the backup status and timestamp.",
       "expected_tools": [
-        "file-operations.list_directory",
-        "database-operations.backup_database",
-        "email-operations.send_email"
+        "file-server.list_directory",
+        "database-server.backup_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: file-operations.list_directory, email-operations.send_email, database-operations.backup_database"
+      "detected_tools": [
+        "file-server.list_directory",
+        "customer_prod_2025_01_20-server.write_file",
+        "email-server.send_email",
+        "file-server.write_file",
+        "file-server.create_file",
+        "file-server.read_file"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "customer_prod",
+        "ops@sysalert.io": "<EMAIL:55fb62514699>"
+      },
+      "errors": [],
       "warnings": [
         "Sensitive data 'ops@sysalert.io' (email) not found in opaque values",
-        "Sensitive data '2025-01-20T02:14:00' (schedule) not found in opaque values"
+        "Sensitive data '2025-01-20T02:14:00' (schedule) not found in opaque values",
+        "Missing expected tools: database-server.backup_database"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 76.75,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"List all files in /backups/db/ to confirm that a backup exists for the `customer_prod` database from \\\"2025-01-20T02:14:00\\\". If there is no backup for that timestamp, create a new backup named customer_prod_2025_01_20 and email ops@sysalert.io about the backup status and timestamp.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"List all files in /backups/db/ to confirm that a backup exists for [[P1]] database from \\\"2025-01-20T02:14:00\\\". If there is no backup for that timestamp, create a new backup named customer_prod_2025_01_20 and email ops@sysalert.io about the backup status and timestamp.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"customer_prod\",\n        \"ops@sysalert.io\": \"<EMAIL:55fb62514699>\"\n      },\n      \"suggested_tools\": [\n        \"file-server.list_directory\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Check if a backup exists for [[P1]] database from \\\"2025-01-20T02:14:00\\\".\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"customer_prod\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Create a new backup named customer_prod_2025_01_20 for [[P1]] database.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"customer_prod\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Send an email to ops@sysalert.io about the backup status and timestamp for [[P1]] database.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"customer_prod\",\n        \"ops@sysalert.io\": \"<EMAIL:55fb62514699>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: list_directory was called with the parameters: {'path': '/backups/db/'}\nemail-server: send_email was called with the parameters: {'to': 'ops@sysalert.io', 'subject': 'Backup status for [[P1]] database from 2025-01-20T02:14:00', 'body': 'No backup exists for the specified timestamp.'}\nTool 'create_file' not listed, no validation will be performed\nfile-server: create_file was called with the parameters: {'path': '/backups/db/customer_prod_2025_01_20', 'content': ''}\nemail-server: send_email was called with the parameters: {'to': 'ops@sysalert.io', 'subject': 'New backup created for [[P1]] database from 2025-01-20T02:14:00', 'body': 'A new backup has been created at /backups/db/customer_prod_2025_01_20'}\nfile-server: read_file was called with the parameters: {'path': '/var/backups/P1_2025-01-20T02-14-00'}\ncustomer_prod_2025_01_20-server: write_file was called with the parameters: {'path': '/backup/customer_prod_2025_01_20.sql'}\nemail-server: send_email was called with the parameters: {'to': 'ops@sysalert.io', 'subject': 'Backup Status for [[P1]] Database', 'body': 'The current backup status and timestamp for [[P1]] database is available at https://example.com/backup-status'}\n"
     },
     {
       "test_id": 10,
       "status": "FAILED",
       "prompt": "Scrape doctor availability from https://cityclinic.demo/availability, update the `doctor_schedule` table, and then email a Saturday summary for \"Dr. Kevin Brooks\" to the clinic admin at admin@cityclinic.demo, including his slots between \"Saturday 10:00-16:00\".",
       "expected_tools": [
-        "web-operations.scrape_website",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "web-server.scrape_website",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
       "detected_tools": [],
-      "sensitive_data_protected": false,
+      "sensitive_data_protected": true,
       "opaque_values": {},
       "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: web-operations.scrape_website, database-operations.query_database, email-operations.send_email"
+        "ERROR: Command failed with return code 1"
       ],
       "warnings": [
         "Sensitive data 'Dr. Kevin Brooks' (name) not found in opaque values",
         "Sensitive data 'Saturday 10:00-16:00' (schedule) not found in opaque values",
-        "Sensitive data 'admin@cityclinic.demo' (email) not found in opaque values"
+        "Sensitive data 'admin@cityclinic.demo' (email) not found in opaque values",
+        "Missing expected tools: database-server.query_database, web-server.scrape_website, email-server.send_email"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 116.15,
+      "raw_output": "ERROR: Command failed with return code 1\nSTDOUT: \ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n\nSTDERR: \n\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n"
     },
     {
       "test_id": 11,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Read /secure/clients/vip_list.csv, cross-check each email in the file against the `marketing_opt_in` table, and generate a list of VIPs who opted out. Email this list to marketing director Claire Jones at claire.jones@marketingdemo.io.",
       "expected_tools": [
-        "file-operations.read_file",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "file-server.read_file",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "claire.jones@marketingdemo.io",
+        "[[P2]]": "VIPs who opted out",
+        "claire.jones@marketingdemo.io": "<EMAIL:66f527034f62>"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'Claire Jones' (name) not found in opaque values",
-        "Sensitive data 'claire.jones@marketingdemo.io' (email) not found in opaque values"
+        "Sensitive data 'Claire Jones' (name) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 53.08,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Read /secure/clients/vip_list.csv, cross-check each email in the file against the `marketing_opt_in` table, and generate a list of VIPs who opted out. Email this list to marketing director Claire Jones at claire.jones@marketingdemo.io.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Read /secure/clients/vip_list.csv\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"claire.jones@marketingdemo.io\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Cross-check each email in the file against the `marketing_opt_in` table\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"claire.jones@marketingdemo.io\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Generate a list of VIPs who opted out\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"VIPs who opted out\"\n      },\n      \"suggested_tools\": []\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Email this list to marketing director Claire Jones at claire.jones@marketingdemo.io.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"claire.jones@marketingdemo.io\",\n        \"claire.jones@marketingdemo.io\": \"<EMAIL:66f527034f62>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {}\ndatabase-server: query_database was called with the parameters: {'table': 'marketing_opt_in', 'columns': ['email']}\nemail-server: send_email was called with the parameters: {'to': 'claire.jones@marketingdemo.io'}\n"
     },
     {
       "test_id": 12,
       "status": "FAILED",
       "prompt": "Make an HTTP GET request to https://incidents.demo/security/open, save the JSON output as /secure/incidents/open_incidents.json, then email a summary of every incident ID, including incident \"INC-8841-A\", to the CISO at ciso@companydemo.org.",
       "expected_tools": [
-        "web-operations.http_request",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "web-server.http_request",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
       "detected_tools": [],
-      "sensitive_data_protected": false,
+      "sensitive_data_protected": true,
       "opaque_values": {},
       "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: file-operations.write_file, web-operations.http_request, email-operations.send_email"
+        "ERROR: Command failed with return code 1"
       ],
       "warnings": [
         "Sensitive data 'INC-8841-A' (other) not found in opaque values",
-        "Sensitive data 'ciso@companydemo.org' (email) not found in opaque values"
+        "Sensitive data 'ciso@companydemo.org' (email) not found in opaque values",
+        "Missing expected tools: web-server.http_request, file-server.write_file, email-server.send_email"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 185.21,
+      "raw_output": "ERROR: Command failed with return code 1\nSTDOUT: \ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nPlanning LLM failed to generate plan with tools for all subprompts!\n\n\t\tOR\n\nTools for a specific task does not exist!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n\nSTDERR: \n\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nPlanning LLM failed to generate plan with tools for all subprompts!\n\n\t\tOR\n\nTools for a specific task does not exist!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n"
     },
     {
       "test_id": 13,
       "status": "FAILED",
       "prompt": "Use the database tools to ensure the `lab_appointments` table exists, then query all appointments for \"2025-08-02T11:30\" and earlier. Export the results to /secure/reports/lab_appts_2025-08-02.csv and email the file to lab coordinator at lab.coordinator@hospitaldemo.org, highlighting patient Zoe Martinez (zoe.martinez@healthmail.org).",
       "expected_tools": [
-        "database-operations.list_tables",
-        "database-operations.query_database",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "database-server.list_tables",
+        "database-server.query_database",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
       "detected_tools": [],
-      "sensitive_data_protected": false,
+      "sensitive_data_protected": true,
       "opaque_values": {},
       "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, database-operations.list_tables, file-operations.write_file, email-operations.send_email"
+        "ERROR: Command failed with return code 1"
       ],
       "warnings": [
         "Sensitive data 'Zoe Martinez' (name) not found in opaque values",
         "Sensitive data 'zoe.martinez@healthmail.org' (email) not found in opaque values",
         "Sensitive data '2025-08-02T11:30' (schedule) not found in opaque values",
-        "Sensitive data 'lab.coordinator@hospitaldemo.org' (email) not found in opaque values"
+        "Sensitive data 'lab.coordinator@hospitaldemo.org' (email) not found in opaque values",
+        "Missing expected tools: database-server.query_database, file-server.write_file, database-server.list_tables, email-server.send_email"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 191.53,
+      "raw_output": "ERROR: Command failed with return code 1\nSTDOUT: \ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nPlanning LLM failed to generate plan with tools for all subprompts!\n\n\t\tOR\n\nTools for a specific task does not exist!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n\nSTDERR: \n\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nRetrying Planning LLM due to invalid tool suggestion!\nPlanning LLM failed to generate plan with tools for all subprompts!\n\n\t\tOR\n\nTools for a specific task does not exist!\n\u26a0\ufe0f  MCP connection issue: 'NoneType' object has no attribute 'model_dump_json'\nTraceback (most recent call last):\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 63, in create_planner\n    yield planner\n  File \"/mnt/c/Users/aadit/Documents/ShardGuard/src/shardguard/cli.py\", line 217, in _plan\n    typer.echo(plan_obj.model_dump_json(indent=2))\n               ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'model_dump_json'\n\nError: generator didn't stop after athrow()\n"
     },
     {
       "test_id": 14,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Download the latest flight bookings CSV from https://airline.demo/bookings.csv to /tmp/bookings.csv, load it into the `flight_bookings` table, and email ops.manager@airline.demo a list of overbooked flights from JFK, including flight where passenger Jason Wu (jason.wu42@flymail.com) departs at \"2025-02-18T07:45\".",
       "expected_tools": [
-        "web-operations.download_file",
-        "file-operations.read_file",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "web-server.download_file",
+        "file-server.read_file",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, web-operations.download_file, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "https://airline.demo/bookings.csv",
+        "[[P2]]": "/tmp/bookings.csv",
+        "https://airline.demo/bookings.csv": "<URL:4ca6b263c2b5>",
+        "[[P3]]": "/tmp/bookings.csv",
+        "[[P4]]": "ops.manager@airline.demo",
+        "[[P5]]": "overbooked flights from JFK, including flight where passenger Jason Wu departs at \"2025-02-18T07:45.\"",
+        "ops.manager@airline.demo": "<EMAIL:589b1182052c>"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'Jason Wu' (name) not found in opaque values",
         "Sensitive data 'jason.wu42@flymail.com' (email) not found in opaque values",
-        "Sensitive data '2025-02-18T07:45' (schedule) not found in opaque values",
-        "Sensitive data 'ops.manager@airline.demo' (email) not found in opaque values"
+        "Missing expected tools: web-server.download_file"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 58.65,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Download the latest flight bookings CSV from https://airline.demo/bookings.csv to /tmp/bookings.csv, load it into the `flight_bookings` table, and email ops.manager@airline.demo a list of overbooked flights from JFK, including flight where passenger Jason Wu (jason.wu42@flymail.com) departs at \\\"2025-02-18T07:45.\\\"\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Download the latest flight bookings CSV from https://airline.demo/bookings.csv to /tmp/bookings.csv using file-server's read_file tool.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"https://airline.demo/bookings.csv\",\n        \"[[P2]]\": \"/tmp/bookings.csv\",\n        \"https://airline.demo/bookings.csv\": \"<URL:4ca6b263c2b5>\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Load the downloaded CSV into the `flight_bookings` table using database-server's query_database tool.\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"/tmp/bookings.csv\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Email ops.manager@airline.demo a list of overbooked flights from JFK, including flight where passenger Jason Wu departs at \\\"2025-02-18T07:45.\\\" using email-server's send_email tool.\",\n      \"opaque_values\": {\n        \"[[P4]]\": \"ops.manager@airline.demo\",\n        \"[[P5]]\": \"overbooked flights from JFK, including flight where passenger Jason Wu departs at \\\"2025-02-18T07:45.\\\"\",\n        \"ops.manager@airline.demo\": \"<EMAIL:589b1182052c>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {'path': '/tmp/bookings.csv', 'format': 'csv'}\ndatabase-server: query_database was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'ops.manager@airline.demo', 'subject': 'Overbooked Flights from JFK', 'body': 'Flight with Jason Wu departing on 2025-02-18T07:45 is overbooked.'}\nemail-server: send_email was called with the parameters: {'to': 'ops.manager@airline.demo', 'subject': 'Overbooked Flights from JFK', 'body': 'Flight with Jason Wu departing on 2025-02-18T07:45 is overbooked.'}\n"
     },
     {
       "test_id": 15,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "List all CSV files in /data/registrar/grades, read each file, and verify that every student ID exists in the `students` table. If any IDs are missing, such as \"20250111838\", email a report of mismatches to registrar@universitydemo.org.",
       "expected_tools": [
-        "file-operations.list_directory",
-        "file-operations.read_file",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "file-server.list_directory",
+        "file-server.read_file",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, file-operations.list_directory, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "email-server.send_email",
+        "database-server.query_database",
+        "file-server.read_file",
+        "file-server.list_directory"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "20250111838",
+        "registrar@universitydemo.org": "<EMAIL:9f1c5904e58a>"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data '20250111838' (student_id) not found in opaque values",
         "Sensitive data 'registrar@universitydemo.org' (email) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 62.74,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"List all CSV files in /data/registrar/grades, read each file, and verify that every student ID exists in the `students` table. If any IDs are missing, such as [[P1]], email a report of mismatches to registrar@universitydemo.org.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"List all CSV files in /data/registrar/grades using list_directory with path /data/registrar/grades\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"20250111838\"\n      },\n      \"suggested_tools\": [\n        \"file-server.list_directory\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Read each CSV file using read_file with path /data/registrar/grades/[[P1]]\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"20250111838\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Verify that every student ID exists in the `students` table using query_database with query SELECT * FROM students WHERE id IN (SELECT id FROM grades)\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"20250111838\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"If any IDs are missing, send an email to registrar@universitydemo.org using send_email with recipient registrar@universitydemo.org and subject Missing student IDs\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"20250111838\",\n        \"registrar@universitydemo.org\": \"<EMAIL:9f1c5904e58a>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: list_directory was called with the parameters: {'path': '/data/registrar/grades'}\nfile-server: read_file was called with the parameters: {'path': '/data/registrar/grades/[P1]'}\ndatabase-server: query_database was called with the parameters: {'query': 'SELECT * FROM students WHERE id IN (SELECT id FROM grades)'}\nemail-server: send_email was called with the parameters: {'to': 'registrar@universitydemo.org', 'subject': 'Missing student IDs'}\n"
     },
     {
       "test_id": 16,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Scrape scholarship results from https://scholarships.demo/results, search for applicant \"Wei Zhang\" with email wei.zhang92@studentdemo.edu, save the full page HTML to /tmp/scholarship_results_wei_zhang.html, and email Wei about whether they received the \"Global Innovator Scholarship\".",
       "expected_tools": [
-        "web-operations.scrape_website",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "web-server.scrape_website",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: web-operations.scrape_website, file-operations.write_file, email-operations.send_email"
+      "detected_tools": [
+        "web-server.http_request",
+        "file-server.write_file",
+        "web-server.scrape_website",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "Wei Zhang",
+        "[[P2]]": "wei.zhang92@studentdemo.edu",
+        "https://scholarships.demo/results": "<URL:b6c033ae3421>",
+        "[[P3]]": "wei.zhang92@studentdemo.edu"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'Wei Zhang' (name) not found in opaque values",
-        "Sensitive data 'wei.zhang92@studentdemo.edu' (email) not found in opaque values",
         "Sensitive data 'Global Innovator Scholarship' (other) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 61.42,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Scrape scholarship results from https://scholarships.demo/results, search for applicant \\\"[[P1]]\\\" with email [[P2]], save the full page HTML to /tmp/scholarship_results_wei_zhang.html, and email [[P3]] about whether they received the \\\"Global Innovator Scholarship\\\".\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Scrape scholarship results from https://scholarships.demo/results\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"Wei Zhang\",\n        \"[[P2]]\": \"wei.zhang92@studentdemo.edu\",\n        \"https://scholarships.demo/results\": \"<URL:b6c033ae3421>\"\n      },\n      \"suggested_tools\": [\n        \"web-server.scrape_website\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Search for applicant \\\"[[P1]]\\\" with email [[P2]]\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"Wei Zhang\",\n        \"[[P2]]\": \"wei.zhang92@studentdemo.edu\"\n      },\n      \"suggested_tools\": [\n        \"web-server.http_request\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Save the full page HTML to /tmp/scholarship_results_wei_zhang.html\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"Wei Zhang\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Email [[P3]] about whether they received the \\\"Global Innovator Scholarship\\\".\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"wei.zhang92@studentdemo.edu\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nweb-server: scrape_website was called with the parameters: {}\nweb-server: http_request was called with the parameters: {'url': 'https://example.com', 'method': 'GET'}\nfile-server: write_file was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'P3', 'subject': 'Global Innovator Scholarship'}\n"
     },
     {
       "test_id": 17,
-      "status": "FAILED",
+      "status": "PASSED",
       "prompt": "Issue an HTTP GET request to https://crm.demo/api/v1/visits?date=2025-09-01, save the JSON to /secure/visits/vip_visits_2025-09-01.json, and email a summary of visitor names, including Olivia Chen, and arrival time \"2025-09-01T10:30\" to the front desk at reception@companydemo.org.",
       "expected_tools": [
-        "web-operations.http_request",
-        "file-operations.write_file",
-        "email-operations.send_email"
+        "web-server.http_request",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: file-operations.write_file, web-operations.http_request, email-operations.send_email"
+      "detected_tools": [
+        "web-server.http_request",
+        "file-server.write_file",
+        "email-server.send_email"
       ],
-      "warnings": [
-        "Sensitive data 'Olivia Chen' (name) not found in opaque values",
-        "Sensitive data '2025-09-01T10:30' (schedule) not found in opaque values",
-        "Sensitive data 'reception@companydemo.org' (email) not found in opaque values"
-      ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "https://crm.demo/api/v1/visits?date=2025-09-01",
+        "https://crm.demo/api/v1/visits?date=2025-09-01": "<URL:30af380d7f2d>",
+        "2025-09-01": "<DATE:f580cdaf5ab5>",
+        "[[P2]]": "/secure/visits/vip_visits_2025-09-01.json",
+        "[[P3]]": "Olivia Chen",
+        "[[P4]]": "\"2025-09-01T10:30\"",
+        "[[P5]]": "reception@companydemo.org",
+        "reception@companydemo.org": "<EMAIL:63306fddecda>"
+      },
+      "errors": [],
+      "warnings": [],
+      "execution_time": 73.87,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Issue an HTTP GET request to https://crm.demo/api/v1/visits?date=2025-09-01, save the JSON to /secure/visits/vip_visits_2025-09-01.json, and email a summary of visitor names, including Olivia Chen, and arrival time \\\"2025-09-01T10:30\\\" to the front desk at reception@companydemo.org.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Make an HTTP GET request to https://crm.demo/api/v1/visits?date=2025-09-01\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"https://crm.demo/api/v1/visits?date=2025-09-01\",\n        \"https://crm.demo/api/v1/visits?date=2025-09-01\": \"<URL:30af380d7f2d>\",\n        \"2025-09-01\": \"<DATE:f580cdaf5ab5>\"\n      },\n      \"suggested_tools\": [\n        \"web-server.http_request\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Save the JSON to /secure/visits/vip_visits_2025-09-01.json\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"/secure/visits/vip_visits_2025-09-01.json\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Email a summary of visitor names, including Olivia Chen\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"Olivia Chen\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Include arrival time \\\"2025-09-01T10:30\\\" in the email\",\n      \"opaque_values\": {\n        \"[[P4]]\": \"\\\"2025-09-01T10:30\\\"\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    },\n    {\n      \"id\": 5,\n      \"content\": \"Send the email to the front desk at reception@companydemo.org\",\n      \"opaque_values\": {\n        \"[[P5]]\": \"reception@companydemo.org\",\n        \"reception@companydemo.org\": \"<EMAIL:63306fddecda>\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com', 'url': 'https://crm.demo/api/v1/visits?date=2025-09-01'}\nfile-server: write_file was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'olivia.chen@example.com', 'subject': 'Visitor Summary'}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com', 'arrival_time': '2025-09-01T10:30'}\nemail-server: send_email was called with the parameters: {'to': 'reception@companydemo.org'}\n"
     },
     {
       "test_id": 18,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Backup the `production_billing` database, list all tables in it to confirm schema consistency, and send an email to dba.lead@sysdemo.net summarizing the backup status and the maintenance window start time \"2025-01-20T22:00\".",
       "expected_tools": [
-        "database-operations.backup_database",
-        "database-operations.list_tables",
-        "email-operations.send_email"
+        "database-server.backup_database",
+        "database-server.list_tables",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.list_tables, database-operations.backup_database, email-operations.send_email"
+      "detected_tools": [
+        "email-server.send_email",
+        "file-server.write_file",
+        "file-server.list_directory"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "dba.lead@sysdemo.net",
+        "[[P2]]": "2025-01-20T22:00"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'dba.lead@sysdemo.net' (email) not found in opaque values",
-        "Sensitive data '2025-01-20T22:00' (schedule) not found in opaque values"
+        "Missing expected tools: database-server.backup_database, database-server.list_tables"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 54.25,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Backup the `production_billing` database, list all tables in it to confirm schema consistency, and send an email to [[P1]] summarizing the backup status and the maintenance window start time \\\"2025-01-20T22:00\\\".\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Backup the `production_billing` database using the file-server tool.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"dba.lead@sysdemo.net\"\n      },\n      \"suggested_tools\": [\n        \"file-server.write_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"List all tables in the `production_billing` database using the file-server tool.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"dba.lead@sysdemo.net\"\n      },\n      \"suggested_tools\": [\n        \"file-server.list_directory\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Send an email to [[P1]] summarizing the backup status and the maintenance window start time using the email-server tool.\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"dba.lead@sysdemo.net\",\n        \"[[P2]]\": \"2025-01-20T22:00\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: write_file was called with the parameters: {}\nfile-server: list_directory was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'P1', 'subject': 'Backup Status and Maintenance Window Start Time', 'body': 'The backup is complete. The maintenance window starts at 2024-03-16T10:00:00Z.'}\n"
     },
     {
       "test_id": 19,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Read /secure/hr/emergency_contacts.csv and update the `employee_contacts` table for any changed phone numbers, including phone \"555-392-8841\" for employee Sarah Nguyen (sarah.nguyen@demo-company.org). Email HR director at hr.director@demo-company.org with a list of employees whose phone numbers were updated.",
       "expected_tools": [
-        "file-operations.read_file",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "file-server.read_file",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "555-392-8841",
+        "[[P2]]": "sarah.nguyen@demo-company.org",
+        "[[P3]]": "hr.director@demo-company.org"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'Sarah Nguyen' (name) not found in opaque values",
-        "Sensitive data '555-392-8841' (phone) not found in opaque values",
-        "Sensitive data 'sarah.nguyen@demo-company.org' (email) not found in opaque values",
-        "Sensitive data 'hr.director@demo-company.org' (email) not found in opaque values"
+        "Sensitive data 'Sarah Nguyen' (name) not found in opaque values"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 61.05,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Read /secure/hr/emergency_contacts.csv and update the `employee_contacts` table for any changed phone numbers, including phone \\\"555-392-8841\\\" for employee Sarah Nguyen (sarah.nguyen@demo-company.org). Email HR director at hr.director@demo-company.org with a list of employees whose phone numbers were updated.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Read contents from /secure/hr/emergency_contacts.csv\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"555-392-8841\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Update the `employee_contacts` table with new phone numbers for employee Sarah Nguyen\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"sarah.nguyen@demo-company.org\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Send an email to HR director with a list of employees whose phone numbers were updated\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"hr.director@demo-company.org\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {}\ndatabase-server: query_database was called with the parameters: {'table': 'employee_contacts', 'column': 'phone_number', 'value': 'new_phone_number'}\nemail-server: send_email was called with the parameters: {'to': 'HR Director', 'cc': '', 'subject': 'Updated Employee Phone Numbers', 'body': 'Below is the list of employees with updated phone numbers: \\n\\n'}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com', 'cc': '', 'subject': 'Updated Employee Phone Numbers', 'body': 'Below is the list of employees with updated phone numbers: \\n\\n'}\nemail-server: send_email was called with the parameters: {'to': 'user2@example.com', 'cc': '', 'subject': 'Updated Employee Phone Numbers', 'body': 'Below is the list of employees with updated phone numbers: \\n\\n'}\n"
     },
     {
       "test_id": 20,
-      "status": "FAILED",
+      "status": "WARNING",
       "prompt": "Download the latest vendor pricing sheet from https://vendors.demo/latest.xlsx to /tmp/latest_prices.xlsx, read the file to update the `vendor_pricing` table, and email a summary of items with more than 10% price increases to purchasing manager at purchasing.manager@demo.biz, including vendor contact email vendor.contact@vendor-demo.io.",
       "expected_tools": [
-        "web-operations.download_file",
-        "file-operations.read_file",
-        "database-operations.query_database",
-        "email-operations.send_email"
+        "web-server.download_file",
+        "file-server.read_file",
+        "database-server.query_database",
+        "email-server.send_email"
       ],
-      "detected_tools": [],
-      "sensitive_data_protected": false,
-      "opaque_values": {},
-      "errors": [
-        "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'",
-        "Missing expected tools: database-operations.query_database, web-operations.download_file, file-operations.read_file, email-operations.send_email"
+      "detected_tools": [
+        "database-server.query_database",
+        "file-server.read_file",
+        "email-server.send_email"
       ],
+      "sensitive_data_protected": true,
+      "opaque_values": {
+        "[[P1]]": "https://vendors.demo/latest.xlsx",
+        "[[P2]]": "/tmp/latest_prices.xlsx",
+        "[[P3]]": "purchasing.manager@demo.biz",
+        "[[P4]]": "vendor.contact@vendor-demo.io"
+      },
+      "errors": [],
       "warnings": [
-        "Sensitive data 'vendor.contact@vendor-demo.io' (email) not found in opaque values",
-        "Sensitive data 'purchasing.manager@demo.biz' (email) not found in opaque values"
+        "Missing expected tools: web-server.download_file"
       ],
-      "execution_time": 0.0,
-      "raw_output": "ERROR: Unexpected exception: TypeError: Popen.__init__() got an unexpected keyword argument 'timeout'"
+      "execution_time": 62.19,
+      "raw_output": "\ud83d\udd0c Initializing ollama provider...\n\u2705 Connected to 4 servers with 11 tools\nUsing Ollama model: llama3.2 at http://localhost:11434\nAvailable tools: 11 tools from 4 servers\n{\n  \"original_prompt\": \"Download the latest vendor pricing sheet from https://vendors.demo/latest.xlsx to /tmp/latest_prices.xlsx, read the file to update the `vendor_pricing` table, and email a summary of items with more than 10% price increases to purchasing manager at purchasing.manager@demo.biz, including vendor contact email vendor.contact@vendor-demo.io.\",\n  \"sub_prompts\": [\n    {\n      \"id\": 1,\n      \"content\": \"Download the latest vendor pricing sheet from [[P1]] to /tmp/latest_prices.xlsx\",\n      \"opaque_values\": {\n        \"[[P1]]\": \"https://vendors.demo/latest.xlsx\"\n      },\n      \"suggested_tools\": [\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 2,\n      \"content\": \"Read the file to update the `vendor_pricing` table\",\n      \"opaque_values\": {\n        \"[[P2]]\": \"/tmp/latest_prices.xlsx\"\n      },\n      \"suggested_tools\": [\n        \"database-server.query_database\",\n        \"file-server.read_file\"\n      ]\n    },\n    {\n      \"id\": 3,\n      \"content\": \"Email a summary of items with more than 10% price increases to purchasing manager\",\n      \"opaque_values\": {\n        \"[[P3]]\": \"purchasing.manager@demo.biz\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    },\n    {\n      \"id\": 4,\n      \"content\": \"Include vendor contact email [[P4]] in the email\",\n      \"opaque_values\": {\n        \"[[P4]]\": \"vendor.contact@vendor-demo.io\"\n      },\n      \"suggested_tools\": [\n        \"email-server.send_email\"\n      ]\n    }\n  ]\n}\nfile-server: read_file was called with the parameters: {'path': '/tmp/latest_prices.xlsx'}\ndatabase-server: query_database was called with the parameters: {}\nfile-server: read_file was called with the parameters: {}\nemail-server: send_email was called with the parameters: {'to': 'purchasing.manager@example.com', 'subject': 'Summary of items with more than 10% price increases'}\nemail-server: send_email was called with the parameters: {'to': 'user@example.com', 'cc': 'vendor@p4.io'}\n"
     }
   ]
 }
