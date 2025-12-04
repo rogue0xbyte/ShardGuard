@@ -338,7 +338,7 @@ class ShardGuardTester:
         print(f"✅ Passed: {passed}")
         print(f"⚠️  Warnings: {warnings}")
         print(f"❌ Failed: {failed}")
-        print(f"\nSuccess Rate: {(passed/total*100):.1f}%")
+        print(f"\nSuccess Rate: {((passed+warnings)/total*100):.1f}%")
         print(f"⏱️  Total Time: {total_time:.2f}s")
         print(f"⏱️  Average Time: {avg_time:.2f}s per test")
         

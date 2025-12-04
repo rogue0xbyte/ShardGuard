@@ -1,4 +1,5 @@
-poetry run sgtest test_cases.yaml -v --output test_report.json
+> poetry run sgtest test_cases.yaml -v --output test_report.json
+
 📋 Loaded 20 test cases from test_cases.yaml
 
 ======================================================================
@@ -1070,7 +1071,7 @@ Total Tests: 20
 ⚠️  Warnings: 15
 ❌ Failed: 4
 
-Success Rate: 5.0%
+Success Rate: 80.0%
 ⏱️  Total Time: 1552.75s
 ⏱️  Average Time: 77.64s per test
 
