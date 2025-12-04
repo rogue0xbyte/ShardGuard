@@ -9,6 +9,10 @@ and sanitization functions to limit data exposure, and ensures least-privilege a
 traditional information flow control systems, ShardGuard avoids complex labeling and taint tracking, offering a more
 practical yet effective path to safe LLM-driven automation.
 
+SGTest - ShardGuard Testing framework is a simple script to feed a YAML file, run test-cases and capture relevant output.
+Mainly helps bulk-run ShardGuard with multiple prompts and capture metrics including time taken per-run, average run-time,
+success Rate, verbose errors and warnings. Can be easily extended to capture further required metrics.
+
 > **⚠️ Note**: This is a basic prototype of [a MCP security system](https://docs.google.com/document/d/1fB_DedbmW5E7MQSgXd98iNj9aQfXtajNKSEtAGUzLYI/edit?tab=t.0).
 > Don't use it for anything production. We're still testing things to see if this is a good approach!
 
@@ -68,6 +72,12 @@ practical yet effective path to safe LLM-driven automation.
 
    ```bash
    poetry run shardguard plan "Send an email to john@example.com about the meeting"
+   ```
+
+4. **Run SGTest**:
+
+   ```bash
+   poetry run sgtest test_cases.yaml -v --output test_report.json
    ```
 
 #### Using Google Gemini (Remote Models)
